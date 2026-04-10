@@ -1,4 +1,5 @@
 import { Inngest } from "inngest";
+import mongoose from "mongoose";
 import connectDB from "./db";
 import User from "@/models/User";
 import Order from "@/models/Order";
@@ -72,19 +73,31 @@ export const createUserOrder = inngest.createFunction(
     async ({events}) => {
         
         const orders = events.map((event)=> {
+            const items = event.data.items.map(item => ({
+                product: new mongoose.Types.ObjectId(item.product),
+                quantity: item.quantity
+            }));
+            
             return {
                 userId: event.data.userId,
-                items: event.data.items,
+                items: items,
                 amount: event.data.amount,
-                address: event.data.address,
-                date : event.data.date
+                address: new mongoose.Types.ObjectId(event.data.address),
+                date: event.data.date,
+                status: event.data.status || 'Order Placed'
             }
         })
 
-        await connectDB()
-        await Order.insertMany(orders)
-
-        return { success: true, processed: orders.length };
+        try {
+            await connectDB()
+            console.log('Saving orders:', JSON.stringify(orders, null, 2));
+            const result = await Order.insertMany(orders)
+            console.log('Orders saved successfully:', result.length);
+            return { success: true, processed: result.length };
+        } catch (error) {
+            console.error('Error saving orders to database:', error);
+            throw error;
+        }
 
     }
 )

@@ -55,11 +55,36 @@ export const AppContextProvider = (props) => {
                 setUserData(data.user)
                 setCartItems(data.user.cartItems)
             } else {
-                toast.error(data.message)
+                // Silently retry once if user is not found (could be Clerk sync delay)
+                setTimeout(async () => {
+                    try {
+                        const retryData = await axios.get('/api/user/data', { headers: { Authorization: `Bearer ${token}` } })
+                        if (retryData.data.success) {
+                            setUserData(retryData.data.user)
+                            setCartItems(retryData.data.user.cartItems)
+                        }
+                    } catch (retryError) {
+                        console.error('Retry failed:', retryError)
+                    }
+                }, 1000)
             }
 
         } catch (error) {
-            toast.error(error.message)
+            console.error('Error fetching user data:', error)
+            // Silently retry once on error (could be Clerk sync delay)
+            setTimeout(async () => {
+                try {
+                    const token = await getToken()
+                    const retryData = await axios.get('/api/user/data', { headers: { Authorization: `Bearer ${token}` } })
+                    if (retryData.data.success) {
+                        setUserData(retryData.data.user)
+                        setCartItems(retryData.data.user.cartItems)
+                    }
+                } catch (retryError) {
+                    console.error('Retry failed:', retryError)
+                    toast.error('Failed to load user data. Please refresh the page.')
+                }
+            }, 1000)
         }
     }
 

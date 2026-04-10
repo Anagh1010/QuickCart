@@ -1,7 +1,5 @@
 import connectDB from "@/config/db";
-import Address from "@/models/Address";
 import Order from "@/models/Order";
-import Product from "@/models/Product";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -12,16 +10,38 @@ export async function GET(request) {
         
         const {userId} = getAuth(request)
 
+        if (!userId) {
+            return NextResponse.json({ success:false, message: 'User not authenticated' })
+        }
+
         await connectDB()
 
-        await Address.length
-        await Product.length
+        console.log('Fetching orders for userId:', userId);
+        
+        // First check if orders exist at all
+        const totalOrders = await Order.countDocuments({userId});
+        console.log(`Found ${totalOrders} orders for user ${userId}`);
 
-        const orders = await Order.find({userId}).populate('address items.product')
+        const orders = await Order.find({userId})
+            .populate({
+                path: 'items.product',
+                model: 'product',
+                select: 'name offerPrice image'
+            })
+            .populate({
+                path: 'address',
+                model: 'address',
+                select: 'fullName phoneNumber area city state'
+            })
+            .sort({ date: -1 })
+            .lean()
 
-        return NextResponse.json({ success:true, orders })
+        console.log('Populated orders:', orders.length);
+
+        return NextResponse.json({ success:true, orders: orders || [] })
 
     } catch (error) {
-        return NextResponse.json({ success:false, message:error.message })
+        console.error('Error fetching orders:', error)
+        return NextResponse.json({ success:false, message: error.message })
     }
 }
