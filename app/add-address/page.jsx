@@ -51,28 +51,28 @@ const AddAddress = () => {
                     </p>
                     <div className="space-y-3 max-w-sm mt-10">
                         <input
-                            className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded outline-none w-full text-gray-500"
+                            className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded-sm outline-hidden w-full text-gray-500"
                             type="text"
                             placeholder="Full name"
                             onChange={(e) => setAddress({ ...address, fullName: e.target.value })}
                             value={address.fullName}
                         />
                         <input
-                            className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded outline-none w-full text-gray-500"
+                            className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded-sm outline-hidden w-full text-gray-500"
                             type="text"
                             placeholder="Phone number"
                             onChange={(e) => setAddress({ ...address, phoneNumber: e.target.value })}
                             value={address.phoneNumber}
                         />
                         <input
-                            className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded outline-none w-full text-gray-500"
+                            className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded-sm outline-hidden w-full text-gray-500"
                             type="text"
                             placeholder="Pin code"
                             onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
                             value={address.pincode}
                         />
                         <textarea
-                            className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded outline-none w-full text-gray-500 resize-none"
+                            className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded-sm outline-hidden w-full text-gray-500 resize-none"
                             type="text"
                             rows={4}
                             placeholder="Address (Area and Street)"
@@ -81,14 +81,14 @@ const AddAddress = () => {
                         ></textarea>
                         <div className="flex space-x-3">
                             <input
-                                className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded outline-none w-full text-gray-500"
+                                className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded-sm outline-hidden w-full text-gray-500"
                                 type="text"
                                 placeholder="City/District/Town"
                                 onChange={(e) => setAddress({ ...address, city: e.target.value })}
                                 value={address.city}
                             />
                             <input
-                                className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded outline-none w-full text-gray-500"
+                                className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded-sm outline-hidden w-full text-gray-500"
                                 type="text"
                                 placeholder="State"
                                 onChange={(e) => setAddress({ ...address, state: e.target.value })}

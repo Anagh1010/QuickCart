@@ -60,7 +60,7 @@ const ProductList = () => {
               {products.map((product, index) => (
                 <tr key={index} className="border-t border-gray-500/20">
                   <td className="md:px-4 pl-2 md:pl-4 py-3 flex items-center space-x-3 truncate">
-                    <div className="bg-gray-500/10 rounded p-2">
+                    <div className="bg-gray-500/10 rounded-sm p-2">
                       <Image
                         src={product.image[0]}
                         alt="product Image"

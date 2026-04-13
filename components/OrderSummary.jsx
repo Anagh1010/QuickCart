@@ -96,7 +96,7 @@ const OrderSummary = () => {
           </label>
           <div className="relative inline-block w-full text-sm border">
             <button
-              className="peer w-full text-left px-4 pr-2 py-2 bg-white text-gray-700 focus:outline-none"
+              className="peer w-full text-left px-4 pr-2 py-2 bg-white text-gray-700 focus:outline-hidden"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
               <span>
@@ -141,7 +141,7 @@ const OrderSummary = () => {
             <input
               type="text"
               placeholder="Enter promo code"
-              className="flex-grow w-full outline-none p-2.5 text-gray-600 border"
+              className="grow w-full outline-hidden p-2.5 text-gray-600 border"
             />
             <button className="bg-orange-600 text-white px-9 py-2 hover:bg-orange-700">
               Apply
