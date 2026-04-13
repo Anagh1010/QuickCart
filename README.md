@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# QuickCart - Modern E-Commerce Platform
 
-## Getting Started
+QuickCart is a full-stack, modern e-commerce platform built with **Next.js 15 (App Router)** and **React 19**. It features real-time data synchronization between Clerk authentication and MongoDB using Inngest background jobs, image hosting via Cloudinary, and a dedicated seller dashboard.
 
-First, run the development server:
+## 🚀 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **User Authentication**: Secure login and sign-up powered by Clerk.
+- **Dynamic Product Discovery**: Browse and search products with high-quality images and detailed descriptions.
+- **Shopping Cart**: Real-time cart management and seamless checkout flow.
+- **Seller Dashboard**: Dedicated interface for sellers to add products, manage listings, and track orders.
+- **Order Management**: Comprehensive tracking for both users and sellers.
+- **Address Management**: Save and manage shipping addresses for faster checkout.
+- **Background Processing**: Reliable user data synchronization using Inngest and Clerk webhooks.
+- **Responsive Design**: Fully optimized for mobile, tablet, and desktop using Tailwind CSS.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
+- **Frontend**: [React 19](https://react.dev/), [Tailwind CSS 3](https://tailwindcss.com/)
+- **Authentication**: [Clerk (@clerk/nextjs)](https://clerk.com/)
+- **Database**: [MongoDB](https://www.mongodb.com/) via [Mongoose](https://mongoosejs.com/)
+- **Background Jobs**: [Inngest](https://www.inngest.com/)
+- **Image Hosting**: [Cloudinary](https://cloudinary.com/)
+- **State Management**: React Context API
+- **Notifications**: React Hot Toast
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📋 Prerequisites
 
-## Learn More
+Before you begin, ensure you have the following accounts and credentials:
+- [Node.js](https://nodejs.org/) (Latest LTS recommended)
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account and connection string
+- [Clerk](https://clerk.com/) account for authentication keys
+- [Cloudinary](https://cloudinary.com/) account for image storage keys
+- [Inngest Cloud](https://www.inngest.com/) account (optional for local development, but recommended for production)
 
-To learn more about Next.js, take a look at the following resources:
+## ⚙️ Local Setup & Installation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Clone the Repository**
+   ```bash
+   git clone <repository-url>
+   cd QuickCart
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-## Deploy on Vercel
+3. **Configure Environment Variables**
+   Create a `.env.local` file in the root directory and add the following:
+   ```env
+   # MongoDB
+   MONGODB_URI=your_mongodb_connection_string
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   # Clerk Authentication
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+   CLERK_SECRET_KEY=your_clerk_secret_key
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   # Cloudinary
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+
+   # Application Settings
+   NEXT_PUBLIC_CURRENCY=$
+   ```
+
+4. **Run the Development Server**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+5. **Run Inngest Dev Server (For Background Jobs)**
+   In a separate terminal, run:
+   ```bash
+   npx inngest-cli@latest dev
+   ```
+   This allows you to test webhooks and background functions locally.
+
+## 📂 Project Structure
+
+- `app/`: Next.js App Router routes and API endpoints.
+- `components/`: Reusable UI components for user and seller interfaces.
+- `models/`: Mongoose schemas for User, Product, Order, and Address.
+- `config/`: Configuration for database and Inngest.
+- `context/`: Global state management via `AppContext`.
+- `lib/`: Utility functions and middleware.
+- `assets/`: Static assets and product data placeholders.
+
+## 📜 Scripts
+
+- `npm run dev`: Starts the development server with Turbopack.
+- `npm run build`: Builds the application for production.
+- `npm start`: Starts the production server.
+- `npm run lint`: Runs ESLint to check for code quality issues.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is private and for educational purposes.
