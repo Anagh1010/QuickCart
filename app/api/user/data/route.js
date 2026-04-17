@@ -20,7 +20,8 @@ export async function GET(request) {
         if (!user) {
             // Auto-create user if not found (for Clerk syncing delays)
             try {
-                const clerkUser = await clerkClient.users.getUser(userId)
+                const client = await clerkClient()
+                const clerkUser = await client.users.getUser(userId)
                 user = await User.create({
                     _id: userId,
                     name: clerkUser.firstName && clerkUser.lastName ? `${clerkUser.firstName} ${clerkUser.lastName}` : clerkUser.firstName || "User",
