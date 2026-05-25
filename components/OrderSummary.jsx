@@ -5,11 +5,12 @@ import toast from "react-hot-toast";
 
 const OrderSummary = () => {
 
-  const { currency, router, getCartCount, getCartAmount, getToken, user , cartItems, setCartItems } = useAppContext()
+  const { currency, router, getCartCount, getCartAmount, getToken, user, cartItems, setCartItems } = useAppContext()
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const [userAddresses, setUserAddresses] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const fetchUserAddresses = async () => {
     try {
@@ -34,6 +35,62 @@ const OrderSummary = () => {
     setIsDropdownOpen(false);
   };
 
+  const initializeRazorpay = (orderData) => {
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: "QuickCart",
+      description: "Order Payment",
+      order_id: orderData.id,
+      handler: async (response) => {
+        // Payment successful — get a fresh token and verify on server
+        try {
+          const freshToken = await getToken();
+          const { data } = await axios.post('/api/order/verify', {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          }, {
+            headers: { Authorization: `Bearer ${freshToken}` }
+          });
+
+          if (data.success) {
+            toast.success("Payment successful!");
+            setCartItems({});
+            router.push('/order-placed');
+          } else {
+            toast.error(data.message || "Payment verification failed");
+          }
+        } catch (error) {
+          toast.error("Payment verification failed. Please contact support.");
+        }
+        setIsProcessing(false);
+      },
+      prefill: {
+        name: user?.fullName || "",
+        email: user?.primaryEmailAddress?.emailAddress || "",
+        contact: selectedAddress?.phoneNumber || user?.primaryPhoneNumber?.phoneNumber || "",
+      },
+      theme: {
+        color: "#ea580c",
+      },
+      modal: {
+        ondismiss: () => {
+          setIsProcessing(false);
+          toast("Payment cancelled. Your order has been saved.", { icon: "ℹ️" });
+        }
+      }
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.on('payment.failed', (response) => {
+      setIsProcessing(false);
+      toast.error("Payment failed: " + response.error.description);
+    });
+    rzp.open();
+  };
+
   const createOrder = async () => {
     try {
 
@@ -41,7 +98,7 @@ const OrderSummary = () => {
         return toast('Please login to place order',{
           icon: '⚠️',
         })
-    }
+      }
       
       if (!selectedAddress) {
         return toast.error('Please select an address')
@@ -54,26 +111,36 @@ const OrderSummary = () => {
         return toast.error('Cart is empty')
       }
 
+      setIsProcessing(true);
       const token = await getToken()
 
       const { data } = await axios.post('/api/order/create',{
         address: selectedAddress._id,
-        items: cartItemsArray
+        items: cartItemsArray,
+        paymentMethod: paymentMethod
       },{
         headers: {Authorization:`Bearer ${token}`}
       })
-      console.log(data)
 
       if (data.success) {
-        toast.success(data.message)
-        setCartItems({})
-        router.push('/order-placed')
+        if (paymentMethod === 'COD') {
+          // COD: order is placed, cart cleared on server
+          toast.success(data.message)
+          setCartItems({})
+          router.push('/order-placed')
+          setIsProcessing(false);
+        } else {
+          // Online: open Razorpay checkout modal
+          initializeRazorpay(data.order);
+        }
       } else {
         toast.error(data.message)
+        setIsProcessing(false);
       }
 
     } catch (error) {
       toast.error(error.message)
+      setIsProcessing(false);
     }
   }
 
@@ -135,6 +202,48 @@ const OrderSummary = () => {
 
         <div>
           <label className="text-base font-medium uppercase text-gray-600 block mb-2">
+            Payment Method
+          </label>
+          <div className="flex flex-col gap-2">
+            <label
+              className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors ${
+                paymentMethod === 'COD'
+                  ? 'border-orange-500 bg-orange-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="COD"
+                checked={paymentMethod === 'COD'}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="accent-orange-600"
+              />
+              <span className="text-sm text-gray-700">Cash on Delivery (COD)</span>
+            </label>
+            <label
+              className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors ${
+                paymentMethod === 'Online'
+                  ? 'border-orange-500 bg-orange-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="Online"
+                checked={paymentMethod === 'Online'}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="accent-orange-600"
+              />
+              <span className="text-sm text-gray-700">Pay Online (Razorpay)</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-base font-medium uppercase text-gray-600 block mb-2">
             Promo Code
           </label>
           <div className="flex flex-col items-start gap-3">
@@ -171,8 +280,16 @@ const OrderSummary = () => {
         </div>
       </div>
 
-      <button onClick={createOrder} className="w-full bg-orange-600 text-white py-3 mt-5 hover:bg-orange-700">
-        Place Order
+      <button
+        onClick={createOrder}
+        disabled={isProcessing}
+        className="w-full bg-orange-600 text-white py-3 mt-5 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isProcessing
+          ? 'Processing...'
+          : paymentMethod === 'Online'
+            ? 'Pay Now'
+            : 'Place Order'}
       </button>
     </div>
   );

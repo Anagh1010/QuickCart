@@ -1,4 +1,4 @@
-import { inngest } from "@/config/inngest";
+import Razorpay from "razorpay";
 import connectDB from "@/config/db";
 import Product from "@/models/Product";
 import User from "@/models/User";
@@ -7,25 +7,22 @@ import mongoose from "mongoose";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-
-
 export async function POST(request) {
     try {
-
-        const { userId } = getAuth(request)
-        const { address, items } = await request.json();
+        const { userId } = getAuth(request);
+        const { address, items, paymentMethod } = await request.json();
 
         if (!address || items.length === 0) {
-            return NextResponse.json({ success: false, message: 'Invalid data' });
+            return NextResponse.json({ success: false, message: "Invalid data" });
         }
 
         if (!userId) {
-            return NextResponse.json({ success: false, message: 'User not authenticated' });
+            return NextResponse.json({ success: false, message: "User not authenticated" });
         }
 
-        await connectDB()
+        await connectDB();
 
-        // calculate amount using items
+        // Calculate amount server-side using product prices
         let amount = 0;
         for (const item of items) {
             const product = await Product.findById(item.product);
@@ -35,49 +32,70 @@ export async function POST(request) {
         }
 
         const totalAmount = amount + Math.floor(amount * 0.02);
-        console.log('Order being created:', { userId, address, itemsCount: items.length, totalAmount });
 
-        // Convert IDs to ObjectId
+        // Build order data
         const orderData = {
             userId,
-            items: items.map(item => ({
+            items: items.map((item) => ({
                 product: new mongoose.Types.ObjectId(item.product),
-                quantity: item.quantity
+                quantity: item.quantity,
             })),
             amount: totalAmount,
             address: new mongoose.Types.ObjectId(address),
-            status: 'Order Placed',
-            date: Date.now()
+            status: "Order Placed",
+            date: Date.now(),
+            paymentMethod: paymentMethod === "Online" ? "Online" : "COD",
+            isPaid: false,
         };
 
-        // Save order directly to database
-        const savedOrder = await Order.create(orderData);
-        console.log('Order saved to database:', savedOrder._id);
+        // ----- COD Flow -----
+        if (paymentMethod !== "Online") {
+            const savedOrder = await Order.create(orderData);
 
-        // Also send event to Inngest for any additional processing
-        await inngest.send({
-            name: 'order/created',
-            data: {
-                userId,
-                address,
-                items,
-                amount: totalAmount,
-                date: Date.now(),
-                status: 'Order Placed'
+            // Clear user's cart
+            const user = await User.findById(userId);
+            if (user) {
+                user.cartItems = {};
+                await user.save();
             }
-        })
 
-        // clear user cart
-        const user = await User.findById(userId)
-        if (user) {
-            user.cartItems = {}
-            await user.save()
+            return NextResponse.json({
+                success: true,
+                message: "Order Placed",
+                orderId: savedOrder._id,
+            });
         }
 
-        return NextResponse.json({ success: true, message: 'Order Placed', orderId: savedOrder._id })
+        // ----- Online Payment Flow -----
+        // Create a Razorpay order
+        const razorpayInstance = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+
+        const razorpayOrder = await razorpayInstance.orders.create({
+            amount: totalAmount * 100, // Razorpay expects amount in paise
+            currency: "INR",
+            receipt: `order_${Date.now()}`,
+        });
+
+        // Save order to DB with Razorpay order ID (unpaid for now)
+        orderData.razorpayOrderId = razorpayOrder.id;
+        const savedOrder = await Order.create(orderData);
+
+        return NextResponse.json({
+            success: true,
+            message: "Razorpay order created",
+            order: {
+                id: razorpayOrder.id,
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+            },
+            orderId: savedOrder._id,
+        });
 
     } catch (error) {
-        console.error('Order creation error:', error)
-        return NextResponse.json({ success: false, message: error.message })
+        console.error("Order creation error:", error);
+        return NextResponse.json({ success: false, message: error.message });
     }
 }

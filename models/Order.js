@@ -11,6 +11,11 @@ const orderSchema = new mongoose.Schema({
     address: { type: mongoose.Schema.Types.ObjectId, ref: 'address', required: true },
     status: { type: String, required: true, default: 'Order Placed' },
     date: { type: Number, required: true },
+    paymentMethod: { type: String, default: 'COD' },
+    isPaid: { type: Boolean, default: false },
+    razorpayOrderId: { type: String, default: '' },
+    razorpayPaymentId: { type: String, default: '' },
+    razorpaySignature: { type: String, default: '' },
 })
 
 const Order = mongoose.models.order || mongoose.model('order', orderSchema)
