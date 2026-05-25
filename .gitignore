@@ -15,6 +15,4 @@ node_modules/
 
 # Gemini
 GEMINI.md
-
-# Future Plans
-payments-handler-for-future/
+.gemini/
