@@ -4,19 +4,25 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 const OrderSummary = () => {
-
   const { currency, router, getCartCount, getCartAmount, getToken, user, cartItems, setCartItems } = useAppContext()
+  
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [userAddresses, setUserAddresses] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Promo code states
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   const fetchUserAddresses = async () => {
     try {
-      
       const token = await getToken()
-      const {data} = await axios.get('/api/user/get-address',{headers:{Authorization:`Bearer ${token}`}})
+      const { data } = await axios.get('/api/user/get-address', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       if (data.success) {
         setUserAddresses(data.addresses)
         if (data.addresses.length > 0) {
@@ -35,6 +41,60 @@ const OrderSummary = () => {
     setIsDropdownOpen(false);
   };
 
+  // Promo code validation handler
+  const handleApplyCoupon = async () => {
+    if (!promoCode.trim()) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+
+    setIsApplying(true);
+    try {
+      const token = await getToken();
+      const { data } = await axios.post("/api/coupon/validate", {
+        code: promoCode.trim(),
+        cartAmount: getCartAmount()
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (data.success) {
+        setAppliedCoupon(data.coupon);
+        toast.success(data.message || "Coupon applied successfully!");
+      } else {
+        setAppliedCoupon(null);
+        toast.error(data.message || "Invalid coupon code");
+      }
+    } catch (error) {
+      setAppliedCoupon(null);
+      toast.error(error.response?.data?.message || "Failed to validate coupon");
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setPromoCode("");
+    toast.success("Coupon removed");
+  };
+
+  // Dynamic calculations incorporating discounts
+  const subtotal = getCartAmount();
+  let discount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discountType === "percentage") {
+      discount = Math.floor(subtotal * (appliedCoupon.discountValue / 100));
+    } else if (appliedCoupon.discountType === "flat") {
+      discount = appliedCoupon.discountValue;
+    }
+    discount = Math.min(discount, subtotal);
+  }
+
+  const discountedSubtotal = Math.max(0, subtotal - discount);
+  const tax = Math.floor(discountedSubtotal * 0.02);
+  const totalAmount = discountedSubtotal + tax;
+
   const initializeRazorpay = (orderData) => {
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -44,7 +104,6 @@ const OrderSummary = () => {
       description: "Order Payment",
       order_id: orderData.id,
       handler: async (response) => {
-        // Payment successful — get a fresh token and verify on server
         try {
           const freshToken = await getToken();
           const { data } = await axios.post('/api/order/verify', {
@@ -93,9 +152,8 @@ const OrderSummary = () => {
 
   const createOrder = async () => {
     try {
-
       if (!user) {
-        return toast('Please login to place order',{
+        return toast('Please login to place order', {
           icon: '⚠️',
         })
       }
@@ -104,7 +162,7 @@ const OrderSummary = () => {
         return toast.error('Please select an address')
       }
 
-      let cartItemsArray = Object.keys(cartItems).map((key) => ({product:key, quantity:cartItems[key]}))
+      let cartItemsArray = Object.keys(cartItems).map((key) => ({ product: key, quantity: cartItems[key] }))
       cartItemsArray = cartItemsArray.filter(item => item.quantity > 0)
 
       if (cartItemsArray.length === 0) {
@@ -114,23 +172,22 @@ const OrderSummary = () => {
       setIsProcessing(true);
       const token = await getToken()
 
-      const { data } = await axios.post('/api/order/create',{
+      const { data } = await axios.post('/api/order/create', {
         address: selectedAddress._id,
         items: cartItemsArray,
-        paymentMethod: paymentMethod
-      },{
-        headers: {Authorization:`Bearer ${token}`}
+        paymentMethod: paymentMethod,
+        couponCode: appliedCoupon ? appliedCoupon.code : null
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       })
 
       if (data.success) {
         if (paymentMethod === 'COD') {
-          // COD: order is placed, cart cleared on server
           toast.success(data.message)
           setCartItems({})
           router.push('/order-placed')
           setIsProcessing(false);
         } else {
-          // Online: open Razorpay checkout modal
           initializeRazorpay(data.order);
         }
       } else {
@@ -151,12 +208,13 @@ const OrderSummary = () => {
   }, [user])
 
   return (
-    <div className="w-full md:w-96 bg-gray-500/5 p-5">
+    <div className="w-full md:w-96 bg-gray-500/5 p-5 rounded-2xl border border-gray-200/40">
       <h2 className="text-xl md:text-2xl font-medium text-gray-700">
         Order Summary
       </h2>
       <hr className="border-gray-500/30 my-5" />
       <div className="space-y-6">
+        {/* Address Dropdown */}
         <div>
           <label className="text-base font-medium uppercase text-gray-600 block mb-2">
             Select Address
@@ -179,7 +237,7 @@ const OrderSummary = () => {
             </button>
 
             {isDropdownOpen && (
-              <ul className="absolute w-full bg-white border shadow-md mt-1 z-10 py-1.5">
+              <ul className="absolute w-full bg-white border shadow-md mt-1 z-10 py-1.5 rounded-b-lg">
                 {userAddresses.map((address, index) => (
                   <li
                     key={index}
@@ -191,7 +249,7 @@ const OrderSummary = () => {
                 ))}
                 <li
                   onClick={() => router.push("/add-address")}
-                  className="px-4 py-2 hover:bg-gray-500/10 cursor-pointer text-center"
+                  className="px-4 py-2 hover:bg-gray-500/10 cursor-pointer text-center text-orange-600 font-semibold"
                 >
                   + Add New Address
                 </li>
@@ -200,16 +258,17 @@ const OrderSummary = () => {
           </div>
         </div>
 
+        {/* Payment Radio Inputs */}
         <div>
           <label className="text-base font-medium uppercase text-gray-600 block mb-2">
             Payment Method
           </label>
           <div className="flex flex-col gap-2">
             <label
-              className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors ${
+              className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${
                 paymentMethod === 'COD'
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-orange-500 bg-orange-50/50'
+                  : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <input
@@ -218,15 +277,15 @@ const OrderSummary = () => {
                 value="COD"
                 checked={paymentMethod === 'COD'}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="accent-orange-600"
+                className="accent-orange-600 w-4 h-4 cursor-pointer"
               />
-              <span className="text-sm text-gray-700">Cash on Delivery (COD)</span>
+              <span className="text-sm text-gray-700 font-medium">Cash on Delivery (COD)</span>
             </label>
             <label
-              className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors ${
+              className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${
                 paymentMethod === 'Online'
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-orange-500 bg-orange-50/50'
+                  : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <input
@@ -235,47 +294,80 @@ const OrderSummary = () => {
                 value="Online"
                 checked={paymentMethod === 'Online'}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="accent-orange-600"
+                className="accent-orange-600 w-4 h-4 cursor-pointer"
               />
-              <span className="text-sm text-gray-700">Pay Online (Razorpay)</span>
+              <span className="text-sm text-gray-700 font-medium">Pay Online (Razorpay)</span>
             </label>
           </div>
         </div>
 
+        {/* Promo Code Submission Section */}
         <div>
           <label className="text-base font-medium uppercase text-gray-600 block mb-2">
             Promo Code
           </label>
-          <div className="flex flex-col items-start gap-3">
-            <input
-              type="text"
-              placeholder="Enter promo code"
-              className="grow w-full outline-hidden p-2.5 text-gray-600 border"
-            />
-            <button className="bg-orange-600 text-white px-9 py-2 hover:bg-orange-700">
-              Apply
-            </button>
-          </div>
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl p-3">
+              <div>
+                <p className="text-xs font-bold text-green-800">COUPON APPLIED: {appliedCoupon.code}</p>
+                <p className="text-[10px] text-green-600 font-medium">
+                  {appliedCoupon.discountType === "percentage" 
+                    ? `${appliedCoupon.discountValue}% Off your order` 
+                    : `${currency}${appliedCoupon.discountValue} Flat Discount`}
+                </p>
+              </div>
+              <button 
+                onClick={handleRemoveCoupon} 
+                className="text-xs text-red-500 hover:text-red-700 font-semibold cursor-pointer"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="SAVE20, FREESHIP"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                className="w-full text-xs outline-hidden p-2.5 text-gray-600 border border-gray-200 rounded-xl bg-white focus:border-gray-400"
+              />
+              <button 
+                onClick={handleApplyCoupon}
+                disabled={isApplying}
+                className="bg-orange-600 text-white text-xs px-6 py-2.5 hover:bg-orange-700 rounded-xl font-bold cursor-pointer transition disabled:opacity-50"
+              >
+                {isApplying ? "..." : "Apply"}
+              </button>
+            </div>
+          )}
         </div>
 
         <hr className="border-gray-500/30 my-5" />
 
+        {/* Dynamic Financial Overview */}
         <div className="space-y-4">
           <div className="flex justify-between text-base font-medium">
             <p className="uppercase text-gray-600">Items {getCartCount()}</p>
-            <p className="text-gray-800">{currency}{getCartAmount()}</p>
+            <p className="text-gray-800">{currency}{subtotal}</p>
           </div>
-          <div className="flex justify-between">
+          {discount > 0 && (
+            <div className="flex justify-between text-sm text-green-700 bg-green-50/50 p-2 rounded-lg">
+              <p>Coupon Discount</p>
+              <p>- {currency}{discount}</p>
+            </div>
+          )}
+          <div className="flex justify-between text-sm">
             <p className="text-gray-600">Shipping Fee</p>
-            <p className="font-medium text-gray-800">Free</p>
+            <p className="font-semibold text-green-600">FREE</p>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between text-sm">
             <p className="text-gray-600">Tax (2%)</p>
-            <p className="font-medium text-gray-800">{currency}{Math.floor(getCartAmount() * 0.02)}</p>
+            <p className="font-medium text-gray-800">{currency}{tax}</p>
           </div>
-          <div className="flex justify-between text-lg md:text-xl font-medium border-t pt-3">
+          <div className="flex justify-between text-lg md:text-xl font-bold border-t border-gray-200 pt-3 text-gray-900">
             <p>Total</p>
-            <p>{currency}{getCartAmount() + Math.floor(getCartAmount() * 0.02)}</p>
+            <p>{currency}{totalAmount}</p>
           </div>
         </div>
       </div>
@@ -283,7 +375,7 @@ const OrderSummary = () => {
       <button
         onClick={createOrder}
         disabled={isProcessing}
-        className="w-full bg-orange-600 text-white py-3 mt-5 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 rounded-xl mt-6 transition shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-wider"
       >
         {isProcessing
           ? 'Processing...'

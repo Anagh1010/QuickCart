@@ -10,11 +10,19 @@ const Navbar = () => {
 
   const { isSeller, router, user } = useAppContext();
   const { openSignIn } = useClerk()
+  const [searchQuery, setSearchQuery] = React.useState('');
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/all-products?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <nav className="flex items-center justify-between px-6 md:px-16 lg:px-32 py-3 border-b border-gray-300 text-gray-700">
       <Image
-        className="cursor-pointer w-28 md:w-32"
+        className="cursor-pointer w-28 md:w-32 h-auto"
         onClick={() => router.push('/')}
         src={assets.logo}
         alt="logo"
@@ -37,8 +45,20 @@ const Navbar = () => {
 
       </div>
 
-      <ul className="hidden md:flex items-center gap-4 ">
-        <Image className="w-4 h-4" src={assets.search_icon} alt="search icon" />
+      <div className="hidden md:flex items-center gap-4">
+        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 border border-gray-300 rounded-full px-3 py-1 bg-gray-50 focus-within:border-gray-500 transition">
+          <input 
+            type="text" 
+            placeholder="Search products..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-transparent text-xs outline-none w-28 focus:w-44 transition-all duration-300 text-gray-700"
+          />
+          <button type="submit" className="focus:outline-none">
+            <Image className="w-3.5 h-3.5 cursor-pointer opacity-70 hover:opacity-100 transition" src={assets.search_icon} alt="search icon" />
+          </button>
+        </form>
+
         {
           user
             ? <>
@@ -56,7 +76,7 @@ const Navbar = () => {
               Account
             </button>
         }
-      </ul>
+      </div>
 
       <div className="flex items-center md:hidden gap-3">
         {isSeller && <button onClick={() => router.push('/seller')} className="text-xs border px-4 py-1.5 rounded-full">Seller Dashboard</button>}

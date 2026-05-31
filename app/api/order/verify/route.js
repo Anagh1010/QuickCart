@@ -2,6 +2,7 @@ import crypto from "crypto";
 import connectDB from "@/config/db";
 import Order from "@/models/Order";
 import User from "@/models/User";
+import Product from "@/models/Product";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -27,12 +28,20 @@ export async function POST(request) {
             .digest("hex");
 
         if (expectedSignature !== razorpay_signature) {
-            // Signature mismatch — mark order as failed
+            // Signature mismatch — mark order as failed and restore reserved stock
             await connectDB();
-            await Order.findOneAndUpdate(
+            const order = await Order.findOneAndUpdate(
                 { razorpayOrderId: razorpay_order_id, userId },
-                { status: "Payment Failed", isPaid: false }
+                { status: "Payment Failed", isPaid: false },
+                { new: true }
             );
+
+            if (order) {
+                for (const item of order.items) {
+                    await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
+                }
+            }
+
             return NextResponse.json({ success: false, message: "Payment verification failed" });
         }
 

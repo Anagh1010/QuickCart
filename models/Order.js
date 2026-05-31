@@ -16,6 +16,8 @@ const orderSchema = new mongoose.Schema({
     razorpayOrderId: { type: String, default: '' },
     razorpayPaymentId: { type: String, default: '' },
     razorpaySignature: { type: String, default: '' },
+    couponCode: { type: String, default: '' },
+    discount: { type: Number, default: 0 }
 })
 
 const Order = mongoose.models.order || mongoose.model('order', orderSchema)

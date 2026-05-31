@@ -16,6 +16,7 @@ const AddProduct = () => {
   const [category, setCategory] = useState('Earphone');
   const [price, setPrice] = useState('');
   const [offerPrice, setOfferPrice] = useState('');
+  const [stock, setStock] = useState('0');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,6 +28,7 @@ const AddProduct = () => {
     formData.append('category',category)
     formData.append('price',price)
     formData.append('offerPrice',offerPrice)
+    formData.append('stock',stock)
 
     for (let i = 0; i < files.length; i++) {
       formData.append('images',files[i])
@@ -46,6 +48,7 @@ const AddProduct = () => {
         setCategory('Earphone');
         setPrice('');
         setOfferPrice('');
+        setStock('0');
       } else {
         toast.error(data.message);
       }
@@ -130,10 +133,10 @@ const AddProduct = () => {
               <option value="Earphone">Earphone</option>
               <option value="Headphone">Headphone</option>
               <option value="Watch">Watch</option>
-              <option value="Smartphone">Smartphone</option>
+              <option value="Mobile">Mobile</option>
               <option value="Laptop">Laptop</option>
               <option value="Camera">Camera</option>
-              <option value="Accessories">Accessories</option>
+              <option value="Console">Console</option>
             </select>
           </div>
           <div className="flex flex-col gap-1 w-32">
@@ -161,6 +164,20 @@ const AddProduct = () => {
               className="outline-hidden md:py-2.5 py-2 px-3 rounded-sm border border-gray-500/40"
               onChange={(e) => setOfferPrice(e.target.value)}
               value={offerPrice}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1 w-32">
+            <label className="text-base font-medium" htmlFor="product-stock">
+              Product Stock
+            </label>
+            <input
+              id="product-stock"
+              type="number"
+              placeholder="0"
+              className="outline-hidden md:py-2.5 py-2 px-3 rounded-sm border border-gray-500/40"
+              onChange={(e) => setStock(e.target.value)}
+              value={stock}
               required
             />
           </div>

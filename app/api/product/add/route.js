@@ -32,6 +32,7 @@ export async function POST(request) {
         const category = formData.get('category');
         const price = formData.get('price');
         const offerPrice = formData.get('offerPrice');
+        const stock = formData.get('stock');
 
         const files = formData.getAll('images');
 
@@ -71,7 +72,8 @@ export async function POST(request) {
             price:Number(price),
             offerPrice:Number(offerPrice),
             image,
-            date: Date.now()
+            date: Date.now(),
+            stock: Number(stock) || 0
         })
 
         return NextResponse.json({ success: true, message: 'Upload successful', newProduct })
