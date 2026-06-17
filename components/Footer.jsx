@@ -13,6 +13,9 @@ const Footer = () => {
             industry. Lorem Ipsum has been the industry's standard dummy text
             ever since the 1500s, when an unknown printer took a galley of type
             and scrambled it to make a type specimen book.
+
+            Text added during meeting.
+            QuickCart is a modern ecommerce platform built using vercel's nextjs architecture which handles server processes on the client's machine
           </p>
         </div>
 
