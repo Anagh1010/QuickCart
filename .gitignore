@@ -6,6 +6,10 @@ node_modules/
 
 # misc
 .DS_Store
+QuickCart_Architecture.docx
+QuickCart_Architecture.pdf
+er.png
+state.png
 
 # .env*
 .env
