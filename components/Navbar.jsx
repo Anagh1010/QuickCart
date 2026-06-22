@@ -8,7 +8,7 @@ import { useClerk, UserButton } from "@clerk/nextjs";
 
 const Navbar = () => {
 
-  const { isSeller, router, user } = useAppContext();
+  const { isSeller, isAdmin, router, user } = useAppContext();
   const { openSignIn } = useClerk()
   const [searchQuery, setSearchQuery] = React.useState('');
 
@@ -42,6 +42,7 @@ const Navbar = () => {
         </Link>
 
         {isSeller && <button onClick={() => router.push('/seller')} className="text-xs border px-4 py-1.5 rounded-full">Seller Dashboard</button>}
+        {isAdmin && <button onClick={() => router.push('/admin')} className="text-xs border border-orange-500 text-orange-600 px-4 py-1.5 rounded-full font-medium hover:bg-orange-50 transition">Admin Panel</button>}
 
       </div>
 
@@ -80,6 +81,7 @@ const Navbar = () => {
 
       <div className="flex items-center md:hidden gap-3">
         {isSeller && <button onClick={() => router.push('/seller')} className="text-xs border px-4 py-1.5 rounded-full">Seller Dashboard</button>}
+        {isAdmin && <button onClick={() => router.push('/admin')} className="text-xs border border-orange-500 text-orange-600 px-4 py-1.5 rounded-full font-medium">Admin</button>}
         {
           user
             ? <>

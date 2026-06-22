@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import Product from "@/models/Product";
 import Order from "@/models/Order";
+import { logError } from "@/lib/logger";
 
 export async function GET(request) {
     try {
@@ -11,6 +12,7 @@ export async function GET(request) {
         const isSeller = await authSeller(userId);
 
         if (!isSeller) {
+            await logError('/api/seller/analytics', new Error('Unauthorized access attempt'), userId, {}, 'warn')
             return NextResponse.json({ success: false, message: 'not authorized' });
         }
 
@@ -134,6 +136,7 @@ export async function GET(request) {
 
     } catch (error) {
         console.error("Seller analytics error:", error);
+        await logError('/api/seller/analytics', error, '', {})
         return NextResponse.json({ success: false, message: error.message });
     }
 }

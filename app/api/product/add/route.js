@@ -4,6 +4,7 @@ import authSeller from "@/lib/authSeller";
 import { NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import Product from "@/models/Product";
+import { logError } from "@/lib/logger";
 
 
 // Configure Cloudinary
@@ -80,6 +81,7 @@ export async function POST(request) {
 
 
     } catch (error) {
-        NextResponse.json({ success: false, message: error.message })
+        await logError('/api/product/add', error, '', {})
+        return NextResponse.json({ success: false, message: error.message })
     }
 }

@@ -1,7 +1,8 @@
 import connectDB from '@/config/db'
 import Product from '@/models/Product'
-import Review from '@/models/Review' // Ensure Review model is registered
+import Review from '@/models/Review'
 import { NextResponse } from 'next/server'
+import { logError } from '@/lib/logger'
 
 export async function GET(request) {
     try {
@@ -72,6 +73,7 @@ export async function GET(request) {
         return NextResponse.json({ success: true, products })
 
     } catch (error) {
+        await logError('/api/product/list', error)
         return NextResponse.json({ success: false, message: error.message })
     }
 }

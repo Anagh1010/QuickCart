@@ -2,6 +2,7 @@ import connectDB from "@/config/db";
 import User from "@/models/User";
 import { getAuth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 
 
 export async function GET(request) {
@@ -31,7 +32,7 @@ export async function GET(request) {
                 })
             } catch (clerkError) {
                 console.error('Error fetching from Clerk:', clerkError)
-                // Fallback: return error instead of creating incomplete user
+                await logError('/api/user/data', clerkError, userId, { context: 'clerk-fetch' })
                 return NextResponse.json({ success: false, message: "User not found. Please try logging in again." })
             }
         }
@@ -40,6 +41,7 @@ export async function GET(request) {
 
     } catch (error) {
         console.error('Error fetching user data:', error)
+        await logError('/api/user/data', error, '', {})
         return NextResponse.json({ success: false, message: error.message })
     }
 

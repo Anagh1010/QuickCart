@@ -8,6 +8,7 @@ import { inngest } from "@/config/inngest";
 import mongoose from "mongoose";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 
 export async function POST(request) {
     let reservedItems = [];
@@ -142,6 +143,7 @@ export async function POST(request) {
 
     } catch (error) {
         console.error("Order creation error:", error);
+        await logError('/api/order/create', error, '', { reservedItems })
         // Rollback reserved stock on failure to preserve inventory levels
         if (reservedItems.length > 0) {
             for (const rollback of reservedItems) {
