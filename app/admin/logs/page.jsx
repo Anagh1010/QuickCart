@@ -68,6 +68,21 @@ export default function AdminLogsPage() {
         }
     }
 
+    const fireTestLog = async (level) => {
+        try {
+            const token = await getToken()
+            const { data } = await axios.get(`/api/admin/logs/test?level=${level}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            if (data.success) {
+                toast.success(`Test ${level.toUpperCase()} logged`)
+                setTimeout(fetchLogs, 500) // refresh after short delay
+            }
+        } catch {
+            toast.error('Failed to fire test log')
+        }
+    }
+
     return (
         <div className='flex-1 min-h-screen bg-gray-50'>
             <div className='w-full md:p-10 p-4 max-w-5xl mx-auto space-y-8'>
@@ -77,13 +92,29 @@ export default function AdminLogsPage() {
                         <h2 className='text-2xl font-semibold text-gray-950'>Error Logs</h2>
                         <p className='text-xs text-gray-500 font-medium mt-1'>{total} total log entries · auto-purged after 90 days</p>
                     </div>
-                    <button
-                        onClick={() => handleClearOld(30)}
-                        disabled={deleting}
-                        className='text-xs text-red-500 border border-red-200 bg-white px-4 py-2 rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50'
-                    >
-                        {deleting ? 'Clearing...' : 'Clear logs older than 30 days'}
-                    </button>
+                    <div className='flex flex-wrap gap-2'>
+                        <span className='text-xs text-gray-400 self-center font-medium'>Test:</span>
+                        {[
+                            { level: 'error', cls: 'text-red-500 border-red-200 hover:bg-red-50' },
+                            { level: 'warn',  cls: 'text-yellow-600 border-yellow-200 hover:bg-yellow-50' },
+                            { level: 'info',  cls: 'text-blue-500 border-blue-200 hover:bg-blue-50' },
+                        ].map(({ level, cls }) => (
+                            <button
+                                key={level}
+                                onClick={() => fireTestLog(level)}
+                                className={`text-xs border bg-white px-3 py-1.5 rounded-xl transition-colors font-semibold ${cls}`}
+                            >
+                                {level.toUpperCase()}
+                            </button>
+                        ))}
+                        <button
+                            onClick={() => handleClearOld(30)}
+                            disabled={deleting}
+                            className='text-xs text-red-500 border border-red-200 bg-white px-4 py-2 rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50'
+                        >
+                            {deleting ? 'Clearing...' : 'Clear > 30 days'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}

@@ -3,11 +3,9 @@ import React from 'react'
 import { assets } from '@/assets/assets'
 import Image from 'next/image'
 import { useAppContext } from '@/context/AppContext'
-import { useClerk } from '@clerk/nextjs'
 
 const Navbar = () => {
   const { router } = useAppContext()
-  const { signOut } = useClerk()
 
   return (
     <div className='flex items-center px-4 md:px-8 py-3 justify-between border-b border-gray-300'>
@@ -17,17 +15,9 @@ const Navbar = () => {
         src={assets.logo}
         alt='QuickCart'
       />
-      <div className='flex items-center gap-3'>
-        <span className='text-xs font-semibold text-orange-600 border border-orange-200 bg-orange-50 px-3 py-1 rounded-full'>
+      <span className='text-xs font-semibold text-orange-600 border border-orange-200 bg-orange-50 px-3 py-1 rounded-full'>
           ADMIN
         </span>
-        <button
-          onClick={() => signOut(() => router.push('/'))}
-          className='bg-gray-600 text-white px-5 py-2 sm:px-7 sm:py-2 rounded-full text-xs sm:text-sm'
-        >
-          Logout
-        </button>
-      </div>
     </div>
   )
 }

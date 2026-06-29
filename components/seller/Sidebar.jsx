@@ -13,6 +13,7 @@ const SideBar = () => {
         { name: 'Manage Stock', path: '/seller/inventory', icon: assets.product_list_icon },
         { name: 'Coupons', path: '/seller/coupons', icon: assets.add_icon },
         { name: 'Orders', path: '/seller/orders', icon: assets.order_icon },
+        { name: 'Cart Analysis', path: '/seller/cart-abandonment', icon: assets.order_icon },
     ];
 
     return (
