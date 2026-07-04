@@ -12,7 +12,7 @@ export async function GET(request) {
         const isSeller = await authSeller(userId);
 
         if (!isSeller) {
-            await logError('/api/seller/analytics', new Error('Unauthorized access attempt'), userId, {}, 'warn')
+            await logError('/api/seller/analytics', new Error('Unauthorized access attempt'), userId, {}, 'warn', 'auth', 403)
             return NextResponse.json({ success: false, message: 'not authorized' });
         }
 
@@ -136,7 +136,7 @@ export async function GET(request) {
 
     } catch (error) {
         console.error("Seller analytics error:", error);
-        await logError('/api/seller/analytics', error, '', {})
+        await logError('/api/seller/analytics', error, '', {}, 'error', 'api', 500)
         return NextResponse.json({ success: false, message: error.message });
     }
 }

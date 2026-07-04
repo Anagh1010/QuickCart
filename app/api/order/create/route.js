@@ -143,7 +143,7 @@ export async function POST(request) {
 
     } catch (error) {
         console.error("Order creation error:", error);
-        await logError('/api/order/create', error, '', { reservedItems })
+        await logError('/api/order/create', error, '', { reservedItems }, 'error', 'api', 500)
         // Rollback reserved stock on failure to preserve inventory levels
         if (reservedItems.length > 0) {
             for (const rollback of reservedItems) {

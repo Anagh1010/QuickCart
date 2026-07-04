@@ -1,13 +1,15 @@
 import mongoose from "mongoose";
 
 const errorLogSchema = new mongoose.Schema({
-    level: { type: String, enum: ['error', 'warn', 'info'], default: 'error' },
-    message: { type: String, required: true },
-    stack: { type: String, default: '' },
-    route: { type: String, default: '' },
-    userId: { type: String, default: '' },
-    metadata: { type: Object, default: {} },
-    createdAt: { type: Date, default: Date.now }
+    level:      { type: String, enum: ['error', 'warn', 'info'], default: 'error' },
+    category:   { type: String, enum: ['api', 'database', 'auth', 'storage', 'performance', 'infra', 'client'], default: 'api' },
+    statusCode: { type: Number, default: null },
+    message:    { type: String, required: true },
+    stack:      { type: String, default: '' },
+    route:      { type: String, default: '' },
+    userId:     { type: String, default: '' },
+    metadata:   { type: Object, default: {} },
+    createdAt:  { type: Date, default: Date.now }
 })
 
 // Auto-expire logs older than 90 days

@@ -45,7 +45,7 @@ export async function GET(request) {
 
     } catch (error) {
         console.error('Error fetching orders:', error)
-        await logError('/api/order/list', error, '', {})
+        await logError('/api/order/list', error, '', {}, 'error', 'api', 500)
         return NextResponse.json({ success:false, message: error.message })
     }
 }

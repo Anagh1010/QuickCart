@@ -81,7 +81,7 @@ export async function POST(request) {
 
 
     } catch (error) {
-        await logError('/api/product/add', error, '', {})
+        await logError('/api/product/add', error, '', {}, 'error', 'api', 500)
         return NextResponse.json({ success: false, message: error.message })
     }
 }

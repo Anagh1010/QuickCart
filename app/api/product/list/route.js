@@ -73,7 +73,7 @@ export async function GET(request) {
         return NextResponse.json({ success: true, products })
 
     } catch (error) {
-        await logError('/api/product/list', error)
+        await logError('/api/product/list', error, '', {}, 'error', 'api', 500)
         return NextResponse.json({ success: false, message: error.message })
     }
 }

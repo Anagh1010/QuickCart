@@ -32,7 +32,7 @@ export async function GET(request) {
                 })
             } catch (clerkError) {
                 console.error('Error fetching from Clerk:', clerkError)
-                await logError('/api/user/data', clerkError, userId, { context: 'clerk-fetch' })
+                await logError('/api/user/data', clerkError, userId, { context: 'clerk-fetch' }, 'error', 'auth', 502)
                 return NextResponse.json({ success: false, message: "User not found. Please try logging in again." })
             }
         }
@@ -41,7 +41,7 @@ export async function GET(request) {
 
     } catch (error) {
         console.error('Error fetching user data:', error)
-        await logError('/api/user/data', error, '', {})
+        await logError('/api/user/data', error, '', {}, 'error', 'api', 500)
         return NextResponse.json({ success: false, message: error.message })
     }
 

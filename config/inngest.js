@@ -3,6 +3,8 @@ import connectDB from "./db";
 import User from "@/models/User";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
+import { runHealthChecks } from "@/lib/healthCheck";
+import { logError } from "@/lib/logger";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "quickcart-next" });
@@ -84,6 +86,45 @@ export const checkAbandonedPayment = inngest.createFunction(
             for (const item of order.items) {
                 await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
             }
+        }
+    }
+)
+
+// Inngest Cron: health-check every 12 hours
+export const scheduledHealthCheck = inngest.createFunction(
+    {
+        id: 'scheduled-health-check',
+        trigger: { cron: '0 */12 * * *' }   // every 12 hours
+    },
+    async () => {
+        // Ensure DB is live so mongoose readyState is accurate
+        await connectDB()
+
+        const results = await runHealthChecks()
+
+        for (const [service, status] of Object.entries(results)) {
+            if (!status.ok) {
+                const category = service === 'mongo' ? 'database' : 'infra'
+                await logError(
+                    `/health/cron/${service}`,
+                    new Error(status.error || `${service} unreachable (scheduled check)`),
+                    '',
+                    { latencyMs: status.latencyMs, detail: status.detail, triggeredBy: 'inngest-cron' },
+                    'error',
+                    category,
+                    503
+                )
+            }
+        }
+
+        const degraded = Object.entries(results)
+            .filter(([, s]) => !s.ok)
+            .map(([name]) => name)
+
+        return {
+            checkedAt: new Date().toISOString(),
+            healthy: degraded.length === 0,
+            degraded
         }
     }
 )

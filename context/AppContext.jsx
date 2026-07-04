@@ -2,8 +2,9 @@
 import { useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { initClientLogger } from "@/lib/clientLogger";
 
 export const AppContext = createContext();
 
@@ -160,6 +161,8 @@ export const AppContextProvider = (props) => {
         return Math.floor(totalAmount * 100) / 100;
     }
 
+    const loggerInitRef = useRef(false)
+
     useEffect(() => {
         fetchProductData()
     }, [])
@@ -167,6 +170,11 @@ export const AppContextProvider = (props) => {
     useEffect(() => {
         if (user) {
             fetchUserData()
+            // Boot client-side perf logger once per session
+            if (!loggerInitRef.current) {
+                loggerInitRef.current = true
+                initClientLogger(user.id)
+            }
         } else {
             setIsSeller(false)
             setIsAdmin(false)

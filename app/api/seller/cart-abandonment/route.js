@@ -100,7 +100,7 @@ export async function GET(request) {
         return NextResponse.json({ success: true, results, from: fromTs, to: toTs })
 
     } catch (error) {
-        await logError('/api/seller/cart-abandonment', error)
+        await logError('/api/seller/cart-abandonment', error, '', {}, 'error', 'api', 500)
         return NextResponse.json({ success: false, message: error.message }, { status: 500 })
     }
 }

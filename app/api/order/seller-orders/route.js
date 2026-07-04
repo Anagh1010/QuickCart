@@ -44,7 +44,7 @@ export async function GET(request) {
         return NextResponse.json({ success: true, orders: filteredOrders })
 
     } catch (error) {
-        await logError('/api/order/seller-orders', error)
+        await logError('/api/order/seller-orders', error, '', {}, 'error', 'api', 500)
         return NextResponse.json({ success: false, message: error.message })
     }
 }

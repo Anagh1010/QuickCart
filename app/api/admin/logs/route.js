@@ -14,15 +14,27 @@ export async function GET(request) {
         await connectDB()
 
         const { searchParams } = new URL(request.url)
-        const level = searchParams.get('level')
-        const route = searchParams.get('route')
-        const page = parseInt(searchParams.get('page') || '1')
-        const limit = parseInt(searchParams.get('limit') || '50')
-        const skip = (page - 1) * limit
+        const level      = searchParams.get('level')
+        const category   = searchParams.get('category')
+        const route      = searchParams.get('route')
+        const statusCode = searchParams.get('statusCode')
+        const page       = parseInt(searchParams.get('page') || '1')
+        const limit      = parseInt(searchParams.get('limit') || '50')
+        const skip       = (page - 1) * limit
 
         const query = {}
-        if (level && level !== 'all') query.level = level
+        if (level      && level      !== 'all') query.level    = level
+        if (category   && category   !== 'all') query.category = category
         if (route) query.route = { $regex: route, $options: 'i' }
+        if (statusCode && statusCode !== 'all') {
+            // Support range shorthand: "4xx" → 400–499, "5xx" → 500–599
+            if (statusCode.endsWith('xx')) {
+                const base = parseInt(statusCode) * 100
+                query.statusCode = { $gte: base, $lt: base + 100 }
+            } else {
+                query.statusCode = parseInt(statusCode)
+            }
+        }
 
         const [logs, total] = await Promise.all([
             ErrorLog.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
