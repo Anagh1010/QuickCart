@@ -5,6 +5,7 @@ import connectDB from "@/config/db";
 import Product from "@/models/Product";
 import Order from "@/models/Order";
 import { logError } from "@/lib/logger";
+import { logAudit } from '@/lib/audit'
 
 export async function GET(request) {
     try {
@@ -125,6 +126,7 @@ export async function GET(request) {
             }
         ]);
 
+        await logAudit('seller.analytics_viewed', 'seller', userId)
         return NextResponse.json({
             success: true,
             totalRevenue,

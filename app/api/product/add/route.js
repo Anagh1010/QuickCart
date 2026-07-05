@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import Product from "@/models/Product";
 import { logError } from "@/lib/logger";
+import { logAudit } from '@/lib/audit'
 
 
 // Configure Cloudinary
@@ -77,6 +78,7 @@ export async function POST(request) {
             stock: Number(stock) || 0
         })
 
+        await logAudit('product.added', 'product', userId, newProduct._id.toString(), { name: newProduct.name })
         return NextResponse.json({ success: true, message: 'Upload successful', newProduct })
 
 

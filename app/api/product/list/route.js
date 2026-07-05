@@ -2,10 +2,15 @@ import connectDB from '@/config/db'
 import Product from '@/models/Product'
 import Review from '@/models/Review'
 import { NextResponse } from 'next/server'
+import { getAuth } from '@clerk/nextjs/server'
 import { logError } from '@/lib/logger'
+import { logAudit, hasRecentAudit } from '@/lib/audit'
 
 export async function GET(request) {
     try {
+        // Extract userId if the user is logged in — product list is public but
+        // we capture the actor when an auth token is present
+        const { userId } = getAuth(request)
         await connectDB()
 
         const { searchParams } = new URL(request.url)
@@ -70,6 +75,13 @@ export async function GET(request) {
             { $sort: sortFields }
         ])
 
+        // Deduplicate within 5 minutes — AppContext re-fetches on every page
+        // navigation; we only want to log genuine browse sessions
+        const auditKey = userId || 'anonymous'
+        const alreadyLogged = await hasRecentAudit('product.listed', auditKey, 5)
+        if (!alreadyLogged) {
+            await logAudit('product.listed', 'product', userId || '', '', { count: products.length, search, category })
+        }
         return NextResponse.json({ success: true, products })
 
     } catch (error) {

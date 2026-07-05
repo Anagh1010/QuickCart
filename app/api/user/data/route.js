@@ -3,6 +3,7 @@ import User from "@/models/User";
 import { getAuth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
+import { logAudit, hasRecentAudit } from '@/lib/audit'
 
 
 export async function GET(request) {
@@ -37,6 +38,12 @@ export async function GET(request) {
             }
         }
 
+        // Only log a session event once per 30 minutes per user
+        // AppContext retries on failure which would otherwise create duplicates
+        const alreadyLogged = await hasRecentAudit('user.session_started', userId, 30)
+        if (!alreadyLogged) {
+            await logAudit('user.session_started', 'user', userId)
+        }
         return NextResponse.json({success:true, user})
 
     } catch (error) {

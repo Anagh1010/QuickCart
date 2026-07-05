@@ -1,9 +1,15 @@
 import connectDB from "@/config/db";
 import Coupon from "@/models/Coupon";
+import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { logAudit } from '@/lib/audit'
 
 export async function POST(request) {
     try {
+        // Capture userId if authenticated — coupon validation is public but we
+        // want to track which user applied which code
+        const { userId } = getAuth(request)
+
         const { code, cartAmount } = await request.json();
 
         if (!code || cartAmount === undefined || isNaN(Number(cartAmount))) {
@@ -23,20 +29,21 @@ export async function POST(request) {
         }
 
         if (Number(cartAmount) < coupon.minCartAmount) {
-            return NextResponse.json({ 
-                success: false, 
-                message: `Minimum order value of $${coupon.minCartAmount} is required to apply this coupon.` 
+            return NextResponse.json({
+                success: false,
+                message: `Minimum order value of $${coupon.minCartAmount} is required to apply this coupon.`
             });
         }
 
+        await logAudit('coupon.validated', 'coupon', userId || '', coupon._id.toString(), {
+            code: coupon.code,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue
+        })
         return NextResponse.json({
             success: true,
             message: "Coupon applied successfully",
-            coupon: {
-                code: coupon.code,
-                discountType: coupon.discountType,
-                discountValue: coupon.discountValue
-            }
+            coupon: { code: coupon.code, discountType: coupon.discountType, discountValue: coupon.discountValue }
         });
 
     } catch (error) {

@@ -10,6 +10,13 @@ QuickCart_Architecture.docx
 QuickCart_Architecture.pdf
 er.png
 state.png
+ARCHITECTURE.md
+ERROR_LOGGING_&_CART_ABANDONMENT.md
+ERROR_AND_AUDIT_LOGGING.md
+Error_Logging-&-Cart_Abandonment.pdf
+Error_Logging_and_Audit_Logs.docx
+QuickCart_ErrorLogging_AuditLogs.docx
+QuickCart_Features.docx
 
 # .env*
 .env

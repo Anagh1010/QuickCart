@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
+import { logAudit } from '@/lib/audit'
 
 export async function POST(request) {
     let reservedItems = [];
@@ -130,6 +131,7 @@ export async function POST(request) {
             data: { orderId: savedOrder._id.toString() },
         });
 
+        await logAudit('order.created', 'order', userId, savedOrder._id.toString(), { itemCount: items.length, paymentMethod, couponCode: couponCode || null })
         return NextResponse.json({
             success: true,
             message: "Razorpay order created",

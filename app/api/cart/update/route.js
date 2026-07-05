@@ -2,6 +2,7 @@ import connectDB from '@/config/db'
 import User from '@/models/User'
 import { getAuth, clerkClient } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { logAudit } from '@/lib/audit'
 
 
 export async function POST(request) {
@@ -34,6 +35,7 @@ export async function POST(request) {
         user.cartItems = cartData
         await user.save()
 
+        await logAudit('cart.updated', 'cart', userId, '', { itemCount: Object.keys(cartData).length })
         return NextResponse.json({ success: true });
 
     } catch (error) {

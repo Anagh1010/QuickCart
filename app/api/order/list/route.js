@@ -5,6 +5,7 @@ import Address from "@/models/Address";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
+import { logAudit, hasRecentAudit } from '@/lib/audit'
 
 
 
@@ -41,6 +42,11 @@ export async function GET(request) {
 
         console.log('Populated orders:', orders.length);
 
+        // Deduplicate within 5 minutes — orders page re-fetches on every mount
+        const alreadyLogged = await hasRecentAudit('order.viewed', userId, 5)
+        if (!alreadyLogged) {
+            await logAudit('order.viewed', 'order', userId, '', { count: orders.length })
+        }
         return NextResponse.json({ success:true, orders: orders || [] })
 
     } catch (error) {
