@@ -4,7 +4,7 @@ import authSeller from "@/lib/authSeller";
 import { NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import Product from "@/models/Product";
-import { logError } from "@/lib/logger";
+import { logError, trackPerf } from "@/lib/logger";
 import { logAudit } from '@/lib/audit'
 
 
@@ -42,25 +42,28 @@ export async function POST(request) {
             return NextResponse.json({ success: false, message: 'no files uploaded' })
         }
 
-        const result = await Promise.all(
-            files.map(async (file) => {
-                const arrayBuffer = await file.arrayBuffer()
-                const buffer = Buffer.from(arrayBuffer)
+        const result = await trackPerf(
+            'cloudinary.upload',
+            () => Promise.all(
+                files.map(async (file) => {
+                    const arrayBuffer = await file.arrayBuffer()
+                    const buffer = Buffer.from(arrayBuffer)
 
-                return new Promise((resolve,reject)=>{
-                    const stream = cloudinary.uploader.upload_stream(
-                        {resource_type: 'auto'},
-                        (error,result) => {
-                            if (error) {
-                                reject(error)
-                            } else {
-                                resolve(result)
+                    return new Promise((resolve, reject) => {
+                        const stream = cloudinary.uploader.upload_stream(
+                            { resource_type: 'auto' },
+                            (error, result) => {
+                                if (error) reject(error)
+                                else resolve(result)
                             }
-                        }
-                    )
-                    stream.end(buffer)
+                        )
+                        stream.end(buffer)
+                    })
                 })
-            })
+            ),
+            '/api/product/add',
+            userId,
+            5000   // image uploads are inherently slow; warn above 5s
         )
 
         const image = result.map(result => result.secure_url)

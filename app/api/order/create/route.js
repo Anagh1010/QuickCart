@@ -8,7 +8,7 @@ import { inngest } from "@/config/inngest";
 import mongoose from "mongoose";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { logError } from "@/lib/logger";
+import { logError, trackPerf } from "@/lib/logger";
 import { logAudit } from '@/lib/audit'
 
 export async function POST(request) {
@@ -115,11 +115,16 @@ export async function POST(request) {
             key_secret: process.env.RAZORPAY_KEY_SECRET,
         });
 
-        const razorpayOrder = await razorpayInstance.orders.create({
-            amount: totalAmount * 100, // paise
-            currency: "INR",
-            receipt: `order_${Date.now()}`,
-        });
+        const razorpayOrder = await trackPerf(
+            'razorpay.orders.create',
+            () => razorpayInstance.orders.create({
+                amount: totalAmount * 100,
+                currency: "INR",
+                receipt: `order_${Date.now()}`,
+            }),
+            '/api/order/create',
+            userId
+        );
 
         // Save order to DB with Razorpay order ID (unpaid)
         orderData.razorpayOrderId = razorpayOrder.id;

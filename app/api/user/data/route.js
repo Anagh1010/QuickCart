@@ -2,7 +2,7 @@ import connectDB from "@/config/db";
 import User from "@/models/User";
 import { getAuth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { logError } from "@/lib/logger";
+import { logError, trackPerf } from "@/lib/logger";
 import { logAudit, hasRecentAudit } from '@/lib/audit'
 
 
@@ -23,7 +23,12 @@ export async function GET(request) {
             // Auto-create user if not found (for Clerk syncing delays)
             try {
                 const client = await clerkClient()
-                const clerkUser = await client.users.getUser(userId)
+                const clerkUser = await trackPerf(
+                    'clerk.getUser',
+                    () => client.users.getUser(userId),
+                    '/api/user/data',
+                    userId
+                )
                 user = await User.create({
                     _id: userId,
                     name: clerkUser.firstName && clerkUser.lastName ? `${clerkUser.firstName} ${clerkUser.lastName}` : clerkUser.firstName || "User",

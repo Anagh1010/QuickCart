@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { trackPerf } from '@/lib/logger'
 
 let cached = global.mongoose
 
@@ -35,17 +36,19 @@ async function connectDB() {
     if (!cached.promise) {
         const opts = { bufferCommands: false }
 
-        cached.promise = mongoose
-            .connect(`${process.env.MONGODB_URI}/quickcart`, opts)
+        cached.promise = trackPerf(
+                'mongodb.connect',
+                () => mongoose.connect(`${process.env.MONGODB_URI}/quickcart`, opts),
+                '/config/db',
+                '',
+                3000   // cold-start connections are expected to take ~1s; warn above 3s
+            )
             .then(async m => {
                 await syncTtlIndex(m.connection.db)
                 return m
             })
             .catch(err => {
-                // Reset promise so the next request retries the connection
                 cached.promise = null
-                // Can't call logError here (DB is the thing that's down)
-                // Output to stderr so Vercel captures it in function logs
                 console.error('[connectDB] MongoDB connection failed:', err.message)
                 throw err
             })
