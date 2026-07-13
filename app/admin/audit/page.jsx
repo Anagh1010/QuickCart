@@ -169,19 +169,61 @@ export default function AdminAuditPage() {
     const topMax = topActions[0]?.count || 1
     const isFiltered = actionFilter || resourceFilter || debouncedUserId
 
+    const handleClearLogs = async () => {
+        if (!confirm('Are you sure you want to permanently delete ALL audit logs? This cannot be undone.')) return
+        
+        try {
+            const token = await getToken()
+            const { data } = await axios.delete('/api/admin/audit', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            if (data.success) {
+                toast.success(data.message)
+                // Refresh data
+                setSummary(null)
+                setLoadingSum(true)
+                const sumRes = await axios.get('/api/admin/audit?view=summary', {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                if (sumRes.data.success) {
+                    setSummary(sumRes.data.summary)
+                    setTopActions(sumRes.data.topActions)
+                    setTopUsers(sumRes.data.topUsers)
+                    setTimeline(sumRes.data.timeline)
+                    setTotalAll(sumRes.data.summary.total30d)
+                }
+                setLoadingSum(false)
+                
+                fetchFeed()
+            } else {
+                toast.error(data.message || 'Failed to clear logs')
+            }
+        } catch (err) {
+            toast.error(err?.response?.data?.message || 'Error clearing logs')
+        }
+    }
+
     return (
         <div className='flex-1 min-h-screen bg-gray-50'>
             <div className='w-full md:p-10 p-4 max-w-5xl mx-auto space-y-8'>
 
                 {/* Header */}
-                <div>
-                    <h2 className='text-2xl font-semibold text-gray-950'>Audit Logs</h2>
-                    <p className='text-xs text-gray-500 font-medium mt-1'>
-                        {isFiltered
-                            ? <>{feedTotal.toLocaleString()} matching events <span className='text-orange-400'>(filtered)</span></>
-                            : <>{feedTotal.toLocaleString()} events in feed · tracks user access across all key features</>
-                        }
-                    </p>
+                <div className='flex items-center justify-between'>
+                    <div>
+                        <h2 className='text-2xl font-semibold text-gray-950'>Audit Logs</h2>
+                        <p className='text-xs text-gray-500 font-medium mt-1'>
+                            {isFiltered
+                                ? <>{feedTotal.toLocaleString()} matching events <span className='text-orange-400'>(filtered)</span></>
+                                : <>{feedTotal.toLocaleString()} events in feed · tracks user access across all key features</>
+                            }
+                        </p>
+                    </div>
+                    <button 
+                        onClick={handleClearLogs}
+                        className='text-xs text-red-500 border border-red-200 bg-white px-4 py-2 rounded-xl hover:bg-red-50 transition-colors flex items-center gap-2'
+                    >
+                        <span>🗑️</span> Clear Logs
+                    </button>
                 </div>
 
                 {/* Summary Cards */}

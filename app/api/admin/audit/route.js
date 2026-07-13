@@ -94,3 +94,21 @@ export async function GET(request) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 })
     }
 }
+
+// DELETE /api/admin/audit
+// Clears all audit logs
+export async function DELETE(request) {
+    try {
+        const { userId } = getAuth(request)
+        if (!userId || !(await authAdmin(userId))) {
+            return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 })
+        }
+
+        await connectDB()
+        const result = await AuditLog.deleteMany({})
+
+        return NextResponse.json({ success: true, message: `Cleared ${result.deletedCount} audit logs` })
+    } catch (error) {
+        return NextResponse.json({ success: false, message: error.message }, { status: 500 })
+    }
+}
