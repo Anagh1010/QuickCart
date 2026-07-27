@@ -5,6 +5,19 @@
   --color-foreground: var(--foreground);
 
   --grid-template-columns-auto: repeat(auto-fit, minmax(200px, 1fr));
+
+  /* Remap orange → cobalt blue */
+  --color-orange-50:  #eff6ff;
+  --color-orange-100: #dbeafe;
+  --color-orange-200: #bfdbfe;
+  --color-orange-300: #93c5fd;
+  --color-orange-400: #60a5fa;
+  --color-orange-500: #3b82f6;
+  --color-orange-600: #2563eb;
+  --color-orange-700: #1d4ed8;
+  --color-orange-800: #1e40af;
+  --color-orange-900: #1e3a8a;
+  --color-orange-950: #172554;
 }
 
 /*
