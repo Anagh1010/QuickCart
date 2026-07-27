@@ -9,7 +9,7 @@ import mongoose from "mongoose";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { logError, trackPerf } from "@/lib/logger";
-import { logAudit } from '@/lib/audit'
+import { getAuditRequestContext, logAudit } from '@/lib/audit'
 
 export async function POST(request) {
     let reservedItems = [];
@@ -102,6 +102,11 @@ export async function POST(request) {
                 await user.save();
             }
 
+            await logAudit('order.created', 'order', userId, savedOrder._id.toString(), { itemCount: items.length, paymentMethod: 'COD', couponApplied: Boolean(couponCode) }, {
+                resourceLabel: `Order ${savedOrder._id}`, request: getAuditRequestContext(request),
+                changes: { after: { status: savedOrder.status, paymentMethod: savedOrder.paymentMethod, amount: savedOrder.amount, isPaid: savedOrder.isPaid }, fields: ['status', 'paymentMethod', 'amount', 'isPaid'] }
+            })
+
             return NextResponse.json({
                 success: true,
                 message: "Order Placed",
@@ -136,7 +141,10 @@ export async function POST(request) {
             data: { orderId: savedOrder._id.toString() },
         });
 
-        await logAudit('order.created', 'order', userId, savedOrder._id.toString(), { itemCount: items.length, paymentMethod, couponCode: couponCode || null })
+        await logAudit('order.created', 'order', userId, savedOrder._id.toString(), { itemCount: items.length, paymentMethod: 'Online', couponApplied: Boolean(couponCode) }, {
+            resourceLabel: `Order ${savedOrder._id}`, request: getAuditRequestContext(request),
+            changes: { after: { status: savedOrder.status, paymentMethod: savedOrder.paymentMethod, amount: savedOrder.amount, isPaid: savedOrder.isPaid }, fields: ['status', 'paymentMethod', 'amount', 'isPaid'] }
+        })
         return NextResponse.json({
             success: true,
             message: "Razorpay order created",

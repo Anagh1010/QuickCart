@@ -3,6 +3,7 @@ import authSeller from '@/lib/authSeller'
 import Product from '@/models/Product'
 import { getAuth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { logError } from '@/lib/logger'
 
 export async function GET(request) {
     try {
@@ -12,7 +13,8 @@ export async function GET(request) {
         const isSeller = await authSeller(userId)
 
         if (!isSeller) {
-            return NextResponse.json({ success: false, message: 'not authorized' });
+            await logError('/api/product/seller-list', new Error('Unauthorized access attempt'), userId || '', {}, 'warn', 'auth', 403)
+            return NextResponse.json({ success: false, message: 'not authorized' }, { status: 403 });
         }
 
         await connectDB()

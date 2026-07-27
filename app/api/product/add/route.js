@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import Product from "@/models/Product";
 import { logError, trackPerf } from "@/lib/logger";
-import { logAudit } from '@/lib/audit'
+import { getAuditRequestContext, logAudit } from '@/lib/audit'
 
 
 // Configure Cloudinary
@@ -24,7 +24,8 @@ export async function POST(request) {
         const isSeller = await authSeller(userId)
 
         if (!isSeller) {
-            return NextResponse.json({ success: false, message: 'not authorized' })
+            await logError('/api/product/add', new Error('Unauthorized access attempt'), userId || '', {}, 'warn', 'auth', 403)
+            return NextResponse.json({ success: false, message: 'not authorized' }, { status: 403 })
         }
 
         const formData = await request.formData()
@@ -81,7 +82,10 @@ export async function POST(request) {
             stock: Number(stock) || 0
         })
 
-        await logAudit('product.added', 'product', userId, newProduct._id.toString(), { name: newProduct.name })
+        await logAudit('product.created', 'product', userId, newProduct._id.toString(), { category: newProduct.category }, {
+            actorRole: 'seller', resourceLabel: newProduct.name, request: getAuditRequestContext(request),
+            changes: { after: { name: newProduct.name, price: newProduct.price, offerPrice: newProduct.offerPrice, stock: newProduct.stock }, fields: ['name', 'price', 'offerPrice', 'stock'] }
+        })
         return NextResponse.json({ success: true, message: 'Upload successful', newProduct })
 
 

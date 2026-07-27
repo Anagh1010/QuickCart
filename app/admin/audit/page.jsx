@@ -15,6 +15,17 @@ const ACTION_LABELS = {
     'coupon.validated':        { label: 'Coupon Used',       icon: '🎟',  color: 'bg-pink-100 text-pink-700' },
     'user.session_started':    { label: 'User Login',        icon: '👤',  color: 'bg-teal-100 text-teal-700' },
     'seller.analytics_viewed': { label: 'Analytics Viewed', icon: '📊',  color: 'bg-gray-100 text-gray-700' },
+    'product.created':         { label: 'Product Created',   icon: '📦',  color: 'bg-green-100 text-green-700' },
+    'product.updated':         { label: 'Product Updated',   icon: '✏️',  color: 'bg-blue-100 text-blue-700' },
+    'product.deleted':         { label: 'Product Deleted',   icon: '🗑️',  color: 'bg-red-100 text-red-700' },
+    'inventory.adjusted':      { label: 'Stock Adjusted',    icon: '📊',  color: 'bg-orange-100 text-orange-700' },
+    'coupon.created':          { label: 'Coupon Created',    icon: '🎟',  color: 'bg-pink-100 text-pink-700' },
+    'coupon.deleted':          { label: 'Coupon Deleted',    icon: '🎟',  color: 'bg-red-100 text-red-700' },
+    'payment.verified':        { label: 'Payment Verified',  icon: '✓',   color: 'bg-green-100 text-green-700' },
+    'payment.verification_failed': { label: 'Payment Failed', icon: '!', color: 'bg-red-100 text-red-700' },
+    'user.role_changed':       { label: 'Role Changed',      icon: '🔐',  color: 'bg-purple-100 text-purple-700' },
+    'review.created':          { label: 'Review Created',    icon: '⭐',  color: 'bg-yellow-100 text-yellow-700' },
+    'address.created':         { label: 'Address Saved',     icon: '📍',  color: 'bg-teal-100 text-teal-700' },
 }
 
 const ActionBadge = ({ action }) => {
@@ -81,7 +92,9 @@ function useDebounce(value, delay = 400) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const ALL_ACTIONS   = Object.keys(ACTION_LABELS)
-const ALL_RESOURCES = ['product', 'cart', 'order', 'coupon', 'user', 'seller']
+const ALL_RESOURCES = ['product', 'cart', 'order', 'coupon', 'user', 'seller', 'review', 'address']
+const ALL_CATEGORIES = ['audit', 'security', 'analytics']
+const ALL_OUTCOMES = ['success', 'denied', 'failed']
 
 export default function AdminAuditPage() {
     const { getToken } = useAppContext()
@@ -91,7 +104,6 @@ export default function AdminAuditPage() {
     const [topActions, setTopActions] = useState([])
     const [topUsers,   setTopUsers]   = useState([])
     const [timeline,   setTimeline]   = useState([])
-    const [totalAll,   setTotalAll]   = useState(0)  // unfiltered total from summary
     const [loadingSum, setLoadingSum] = useState(true)
 
     // Feed state
@@ -103,9 +115,14 @@ export default function AdminAuditPage() {
     // Filters — userIdInput is the raw text; debouncedUserId triggers the fetch
     const [actionFilter,   setActionFilter]   = useState('')
     const [resourceFilter, setResourceFilter] = useState('')
+    const [categoryFilter, setCategoryFilter] = useState('')
+    const [outcomeFilter, setOutcomeFilter] = useState('')
+    const [resourceIdInput, setResourceIdInput] = useState('')
     const [userIdInput,    setUserIdInput]     = useState('')
+    const [selectedLog, setSelectedLog] = useState(null)
     const [page,           setPage]           = useState(1)
     const debouncedUserId = useDebounce(userIdInput, 400)
+    const debouncedResourceId = useDebounce(resourceIdInput, 400)
 
     // Fetch summary once on mount
     useEffect(() => {
@@ -120,7 +137,6 @@ export default function AdminAuditPage() {
                     setTopActions(data.topActions)
                     setTopUsers(data.topUsers)
                     setTimeline(data.timeline)
-                    setTotalAll(data.summary.total30d) // use 30-day as "recent total" in header
                 }
             } catch { toast.error('Failed to load audit summary') }
             finally  { setLoadingSum(false) }
@@ -136,7 +152,10 @@ export default function AdminAuditPage() {
                 view: 'feed', page, limit: 50,
                 ...(actionFilter    && { action:   actionFilter }),
                 ...(resourceFilter  && { resource: resourceFilter }),
+                ...(categoryFilter  && { category: categoryFilter }),
+                ...(outcomeFilter   && { outcome: outcomeFilter }),
                 ...(debouncedUserId && { userId:   debouncedUserId }),
+                ...(debouncedResourceId && { resourceId: debouncedResourceId }),
             })
             const { data } = await axios.get(`/api/admin/audit?${params}`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -148,7 +167,7 @@ export default function AdminAuditPage() {
             }
         } catch { toast.error('Failed to load activity feed') }
         finally  { setLoadingFeed(false) }
-    }, [actionFilter, resourceFilter, debouncedUserId, page])
+    }, [actionFilter, resourceFilter, categoryFilter, outcomeFilter, debouncedUserId, debouncedResourceId, page])
 
     useEffect(() => { fetchFeed() }, [fetchFeed])
 
@@ -157,6 +176,9 @@ export default function AdminAuditPage() {
         setPage(1)
         if (key === 'action')   setActionFilter(value)
         if (key === 'resource') setResourceFilter(value)
+        if (key === 'category') setCategoryFilter(value)
+        if (key === 'outcome') setOutcomeFilter(value)
+        if (key === 'resourceId') setResourceIdInput(value)
         if (key === 'userId')   setUserIdInput(value)
     }
 
@@ -167,41 +189,7 @@ export default function AdminAuditPage() {
     }
 
     const topMax = topActions[0]?.count || 1
-    const isFiltered = actionFilter || resourceFilter || debouncedUserId
-
-    const handleClearLogs = async () => {
-        if (!confirm('Are you sure you want to permanently delete ALL audit logs? This cannot be undone.')) return
-        
-        try {
-            const token = await getToken()
-            const { data } = await axios.delete('/api/admin/audit', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            if (data.success) {
-                toast.success(data.message)
-                // Refresh data
-                setSummary(null)
-                setLoadingSum(true)
-                const sumRes = await axios.get('/api/admin/audit?view=summary', {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                if (sumRes.data.success) {
-                    setSummary(sumRes.data.summary)
-                    setTopActions(sumRes.data.topActions)
-                    setTopUsers(sumRes.data.topUsers)
-                    setTimeline(sumRes.data.timeline)
-                    setTotalAll(sumRes.data.summary.total30d)
-                }
-                setLoadingSum(false)
-                
-                fetchFeed()
-            } else {
-                toast.error(data.message || 'Failed to clear logs')
-            }
-        } catch (err) {
-            toast.error(err?.response?.data?.message || 'Error clearing logs')
-        }
-    }
+    const isFiltered = actionFilter || resourceFilter || categoryFilter || outcomeFilter || debouncedUserId || debouncedResourceId
 
     return (
         <div className='flex-1 min-h-screen bg-gray-50'>
@@ -218,12 +206,7 @@ export default function AdminAuditPage() {
                             }
                         </p>
                     </div>
-                    <button 
-                        onClick={handleClearLogs}
-                        className='text-xs text-red-500 border border-red-200 bg-white px-4 py-2 rounded-xl hover:bg-red-50 transition-colors flex items-center gap-2'
-                    >
-                        <span>🗑️</span> Clear Logs
-                    </button>
+                    <span className='text-xs text-gray-400 border border-gray-200 bg-white px-4 py-2 rounded-xl'>Append-only history</span>
                 </div>
 
                 {/* Summary Cards */}
@@ -325,7 +308,7 @@ export default function AdminAuditPage() {
                             Activity Feed
                             {isFiltered && (
                                 <button
-                                    onClick={() => { setActionFilter(''); setResourceFilter(''); setUserIdInput(''); setPage(1) }}
+                                    onClick={() => { setActionFilter(''); setResourceFilter(''); setCategoryFilter(''); setOutcomeFilter(''); setResourceIdInput(''); setUserIdInput(''); setPage(1) }}
                                     className='ml-2 text-[10px] text-orange-500 font-normal hover:underline'
                                 >clear filters ×</button>
                             )}
@@ -341,6 +324,16 @@ export default function AdminAuditPage() {
                             {ALL_ACTIONS.map(a => (
                                 <option key={a} value={a}>{ACTION_LABELS[a].icon} {ACTION_LABELS[a].label}</option>
                             ))}
+                        </select>
+
+                        <select value={categoryFilter} onChange={e => setFilter('category', e.target.value)} className='border border-gray-200 bg-white text-gray-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-orange-400'>
+                            <option value=''>All Categories</option>
+                            {ALL_CATEGORIES.map(value => <option key={value} value={value}>{value}</option>)}
+                        </select>
+
+                        <select value={outcomeFilter} onChange={e => setFilter('outcome', e.target.value)} className='border border-gray-200 bg-white text-gray-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-orange-400'>
+                            <option value=''>All Outcomes</option>
+                            {ALL_OUTCOMES.map(value => <option key={value} value={value}>{value}</option>)}
                         </select>
 
                         {/* Resource filter */}
@@ -363,6 +356,7 @@ export default function AdminAuditPage() {
                             onChange={e => setFilter('userId', e.target.value)}
                             className='border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-orange-400 w-44'
                         />
+                        <input type='text' placeholder='Target ID…' value={resourceIdInput} onChange={e => setFilter('resourceId', e.target.value)} className='border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-orange-400 w-36' />
                     </div>
 
                     {/* Table */}
@@ -377,12 +371,12 @@ export default function AdminAuditPage() {
                     ) : (
                         <div className='divide-y divide-gray-50'>
                             {logs.map(log => (
-                                <div key={log._id} className='flex flex-wrap items-center gap-3 px-6 py-3 hover:bg-gray-50 transition-colors'>
+                                <button key={log._id} onClick={() => setSelectedLog(log)} className='w-full text-left flex flex-wrap items-center gap-3 px-6 py-3 hover:bg-gray-50 transition-colors'>
                                     <ActionBadge action={log.action} />
                                     <span
                                         className='text-xs text-gray-500 font-mono truncate max-w-[180px] cursor-pointer hover:text-orange-500'
                                         title={log.userId || 'anonymous'}
-                                        onClick={() => log.userId && setFilter('userId', log.userId)}
+                                        onClick={(event) => { event.stopPropagation(); if (log.userId) setFilter('userId', log.userId) }}
                                     >
                                         {log.userId
                                             ? log.userId
@@ -397,7 +391,7 @@ export default function AdminAuditPage() {
                                     <span className='ml-auto text-[10px] text-gray-400 whitespace-nowrap'>
                                         {new Date(log.createdAt).toLocaleString()}
                                     </span>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     )}
@@ -419,6 +413,13 @@ export default function AdminAuditPage() {
                         </div>
                     )}
                 </div>
+
+                {selectedLog && (
+                    <div className='bg-white border border-gray-200 rounded-2xl p-6'>
+                        <div className='flex items-center justify-between gap-4 mb-4'><h3 className='text-sm font-semibold text-gray-800'>Event details</h3><button onClick={() => setSelectedLog(null)} className='text-xs text-gray-400 hover:text-gray-700'>Close ×</button></div>
+                        <pre className='text-xs text-gray-600 overflow-auto max-h-80 bg-gray-50 rounded-xl p-4'>{JSON.stringify({ action: selectedLog.action, category: selectedLog.category, outcome: selectedLog.outcome, actor: selectedLog.actor || { id: selectedLog.userId }, target: { resource: selectedLog.resource, id: selectedLog.resourceId, label: selectedLog.resourceLabel }, changes: selectedLog.changes, metadata: selectedLog.metadata, request: selectedLog.request, occurredAt: selectedLog.createdAt }, null, 2)}</pre>
+                    </div>
+                )}
 
             </div>
         </div>

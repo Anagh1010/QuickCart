@@ -4,6 +4,8 @@ import authSeller from "@/lib/authSeller";
 import { NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import Product from "@/models/Product";
+import { logError } from "@/lib/logger";
+import { getAuditRequestContext, logAudit } from '@/lib/audit'
 
 // Configure Cloudinary
 cloudinary.config({
@@ -18,7 +20,8 @@ export async function POST(request) {
         const isSeller = await authSeller(userId);
 
         if (!isSeller) {
-            return NextResponse.json({ success: false, message: 'not authorized' });
+            await logError('/api/product/edit', new Error('Unauthorized access attempt'), userId || '', {}, 'warn', 'auth', 403)
+            return NextResponse.json({ success: false, message: 'not authorized' }, { status: 403 });
         }
 
         const formData = await request.formData();
@@ -81,6 +84,8 @@ export async function POST(request) {
             return NextResponse.json({ success: false, message: 'At least one product image is required' });
         }
 
+        const before = { name: product.name, category: product.category, price: product.price, offerPrice: product.offerPrice, stock: product.stock, imageCount: product.image?.length || 0 }
+
         // Update product details
         product.name = name || product.name;
         product.description = description || product.description;
@@ -91,6 +96,13 @@ export async function POST(request) {
         product.image = finalImages;
 
         await product.save();
+
+        const after = { name: product.name, category: product.category, price: product.price, offerPrice: product.offerPrice, stock: product.stock, imageCount: product.image?.length || 0 }
+        const fields = Object.keys(after).filter(key => before[key] !== after[key])
+        await logAudit('product.updated', 'product', userId, product._id.toString(), {}, {
+            actorRole: 'seller', resourceLabel: product.name, request: getAuditRequestContext(request),
+            changes: { before, after, fields }
+        })
 
         return NextResponse.json({ success: true, message: 'Product updated successfully', product });
 

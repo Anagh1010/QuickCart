@@ -3,11 +3,13 @@ import User from '@/models/User'
 import { getAuth, clerkClient } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import authAdmin from '@/lib/authAdmin'
+import { logError } from '@/lib/logger'
 
 export async function GET(request) {
     try {
         const { userId } = getAuth(request)
         if (!userId || !(await authAdmin(userId))) {
+            await logError('/api/admin/users', new Error('Unauthorized access attempt'), userId || '', {}, 'warn', 'auth', 403)
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 })
         }
 

@@ -5,6 +5,7 @@ import User from "@/models/User";
 import Product from "@/models/Product";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getAuditRequestContext, logAudit } from '@/lib/audit'
 
 export async function POST(request) {
     try {
@@ -40,6 +41,10 @@ export async function POST(request) {
                 for (const item of order.items) {
                     await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
                 }
+                await logAudit('payment.verification_failed', 'order', userId, order._id.toString(), {}, {
+                    category: 'security', outcome: 'failed', resourceLabel: `Order ${order._id}`, request: getAuditRequestContext(request),
+                    changes: { before: { status: 'Order Placed', isPaid: false }, after: { status: order.status, isPaid: order.isPaid }, fields: ['status', 'isPaid'] }
+                })
             }
 
             return NextResponse.json({ success: false, message: "Payment verification failed" });
@@ -68,6 +73,11 @@ export async function POST(request) {
             user.cartItems = {};
             await user.save();
         }
+
+        await logAudit('payment.verified', 'order', userId, order._id.toString(), {}, {
+            resourceLabel: `Order ${order._id}`, request: getAuditRequestContext(request),
+            changes: { before: { isPaid: false }, after: { isPaid: true }, fields: ['isPaid'] }
+        })
 
         return NextResponse.json({ success: true, message: "Payment verified successfully" });
 

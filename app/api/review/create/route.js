@@ -3,6 +3,7 @@ import Review from "@/models/Review";
 import Order from "@/models/Order";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getAuditRequestContext, logAudit } from '@/lib/audit'
 
 export async function POST(request) {
     try {
@@ -43,6 +44,11 @@ export async function POST(request) {
             isVerified,
             date: Date.now()
         });
+
+        await logAudit('review.created', 'review', userId, newReview._id.toString(), { productId, rating: newReview.rating, isVerified }, {
+            resourceLabel: `Review for ${productId}`, request: getAuditRequestContext(request),
+            changes: { after: { rating: newReview.rating, isVerified }, fields: ['rating', 'isVerified'] }
+        })
 
         return NextResponse.json({ success: true, message: "Review submitted successfully", review: newReview });
 

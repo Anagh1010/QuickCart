@@ -4,13 +4,14 @@ import authAdmin from '@/lib/authAdmin'
 import connectDB from '@/config/db'
 import LogSettings from '@/models/LogSettings'
 import mongoose from 'mongoose'
-import { invalidateLoggingCache } from '@/lib/logger'
+import { invalidateLoggingCache, logError } from '@/lib/logger'
 
 // GET /api/admin/logs/settings
 export async function GET(request) {
     try {
         const { userId } = getAuth(request)
         if (!userId || !(await authAdmin(userId))) {
+            await logError(request.nextUrl?.pathname || '/api/admin/logs/settings', new Error('Unauthorized access attempt'), userId || '', {}, 'warn', 'auth', 403)
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 })
         }
 
@@ -32,6 +33,7 @@ export async function PATCH(request) {
     try {
         const { userId } = getAuth(request)
         if (!userId || !(await authAdmin(userId))) {
+            await logError(request.nextUrl?.pathname || '/api/admin/logs/settings', new Error('Unauthorized access attempt'), userId || '', {}, 'warn', 'auth', 403)
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 })
         }
 
