@@ -41,8 +41,8 @@ const Navbar = () => {
           Contact
         </Link>
 
-        {isSeller && <button onClick={() => router.push('/seller')} className="text-xs border px-4 py-1.5 rounded-full">Seller Dashboard</button>}
-        {isAdmin && <button onClick={() => router.push('/admin')} className="text-xs border border-orange-500 text-orange-600 px-4 py-1.5 rounded-full font-medium hover:bg-orange-50 transition">Admin Panel</button>}
+        {isSeller && <button onClick={() => router.push('/seller')} className="text-xs border border-blue-500 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition">Seller Dashboard</button>}
+        {isAdmin && <button onClick={() => router.push('/admin')} className="text-xs bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition shadow-sm">Admin Panel</button>}
 
       </div>
 
@@ -72,16 +72,16 @@ const Navbar = () => {
                 </UserButton.MenuItems>
               </UserButton>
             </>
-            : <button onClick={openSignIn} className="flex items-center gap-2 hover:text-gray-900 transition">
-              <Image src={assets.user_icon} alt="user icon" />
+            : <button onClick={openSignIn} className="flex items-center gap-2 border border-gray-300 px-4 py-1.5 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
+              <Image src={assets.user_icon} alt="user icon" className="w-4 h-4" />
               Account
             </button>
         }
       </div>
 
       <div className="flex items-center md:hidden gap-3">
-        {isSeller && <button onClick={() => router.push('/seller')} className="text-xs border px-4 py-1.5 rounded-full">Seller Dashboard</button>}
-        {isAdmin && <button onClick={() => router.push('/admin')} className="text-xs border border-orange-500 text-orange-600 px-4 py-1.5 rounded-full font-medium">Admin</button>}
+        {isSeller && <button onClick={() => router.push('/seller')} className="text-xs border border-blue-500 text-blue-600 px-3 py-1.5 rounded-lg font-medium">Seller</button>}
+        {isAdmin && <button onClick={() => router.push('/admin')} className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-semibold">Admin</button>}
         {
           user
             ? <>
@@ -100,9 +100,8 @@ const Navbar = () => {
                 </UserButton.MenuItems>
               </UserButton>
             </>
-            : <button onClick={openSignIn} className="flex items-center gap-2 hover:text-gray-900 transition">
-              <Image src={assets.user_icon} alt="user icon" />
-              Account
+            : <button onClick={openSignIn} className="flex items-center gap-2 border border-gray-300 px-3 py-1.5 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
+              <Image src={assets.user_icon} alt="user icon" className="w-4 h-4" />
             </button>
         }
       </div>

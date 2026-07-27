@@ -15,9 +15,17 @@ const Navbar = () => {
         src={assets.logo}
         alt='QuickCart'
       />
-      <span className='text-xs font-semibold text-orange-600 border border-orange-200 bg-orange-50 px-3 py-1 rounded-full'>
+      <div className='flex items-center gap-3'>
+        <button
+          onClick={() => router.push('/')}
+          className='text-xs text-gray-500 hover:text-blue-600 transition hidden sm:block'
+        >
+          ← Storefront
+        </button>
+        <span className='text-xs font-semibold text-blue-600 border border-blue-200 bg-blue-50 px-3 py-1 rounded-full'>
           ADMIN
         </span>
+      </div>
     </div>
   )
 }

@@ -62,15 +62,25 @@ const Sidebar = () => {
                     <Link href={item.path} key={item.name} passHref>
                         <div className={`flex items-center py-3 px-4 gap-3 ${
                             isActive
-                                ? 'border-r-4 md:border-r-[6px] bg-orange-600/10 border-orange-500/90 text-orange-600'
-                                : 'hover:bg-gray-100/90 border-white text-gray-700'
+                                ? 'border-r-4 md:border-r-[6px] bg-blue-600/10 border-blue-500/90 text-blue-600'
+                                : 'hover:bg-gray-100/90 border-white text-gray-700 hover:text-blue-600 transition'
                         }`}>
                             {item.icon}
-                            <p className='md:block hidden'>{item.name}</p>
+                            <p className='md:block hidden font-medium'>{item.name}</p>
                         </div>
                     </Link>
                 )
             })}
+            <div className='mt-auto border-t border-gray-200 pt-2'>
+                <Link href='/' passHref>
+                    <div className='flex items-center py-3 px-4 gap-3 hover:bg-gray-100/90 text-gray-500 hover:text-blue-600 transition'>
+                        <svg className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth={1.8} viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' d='M10 19l-7-7m0 0l7-7m-7 7h18' />
+                        </svg>
+                        <p className='md:block hidden font-medium text-sm'>Storefront</p>
+                    </div>
+                </Link>
+            </div>
         </div>
     )
 }

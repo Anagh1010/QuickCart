@@ -36,6 +36,9 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+  body {
+    font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  }
 }
 
 @layer utilities {

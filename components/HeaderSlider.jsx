@@ -38,8 +38,8 @@ const HeaderSlider = () => {
     },
     {
       id: 3,
-      title: "Experience Next-Gen Innovation - Samsung Galaxy S23!",
-      offer: "Limited Time Offer 30% Off",
+      title: "Experience Next-Gen Innovation - Samsung Galaxy S25!",
+      offer: "Limited Time Offer $100 Off",
       buttonText1: "Buy now",
       buttonText2: "Find more",
       imgSrc: s23Product?.image?.[0] || assets.samsung_s23phone_image,
@@ -94,13 +94,13 @@ const HeaderSlider = () => {
                 <div className="flex items-center mt-4 md:mt-6 ">
                   <button 
                     onClick={handleProductRedirect}
-                    className="md:px-10 px-7 md:py-2.5 py-2 bg-orange-600 rounded-full text-white font-medium cursor-pointer transition hover:bg-orange-700 shadow-xs focus:outline-hidden"
+                    className="md:px-10 px-7 md:py-2.5 py-2 bg-blue-600 rounded-lg text-white font-semibold cursor-pointer transition hover:bg-blue-700 shadow-md focus:outline-hidden"
                   >
                     {slide.buttonText1}
                   </button>
                   <button 
                     onClick={handleProductRedirect}
-                    className="group flex items-center gap-2 px-6 py-2.5 font-medium cursor-pointer focus:outline-hidden text-gray-700"
+                    className="group flex items-center gap-2 px-6 py-2.5 font-medium cursor-pointer focus:outline-hidden text-gray-700 hover:text-blue-600 transition"
                   >
                     {slide.buttonText2}
                     <Image className="group-hover:translate-x-1 transition" src={assets.arrow_icon} alt="arrow_icon" />

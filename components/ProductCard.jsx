@@ -83,10 +83,10 @@ const ProductCard = ({ product }) => {
                 <p className="text-base font-semibold text-orange-600">{currency}{product.offerPrice}</p>
                 <button 
                     disabled={isOutOfStock}
-                    className={`max-sm:hidden px-4 py-1.5 border rounded-full text-xs transition font-medium ${
-                        isOutOfStock 
+                    className={`max-sm:hidden px-4 py-1.5 border rounded-lg text-xs transition font-medium ${
+                    isOutOfStock 
                             ? 'text-gray-400 border-gray-200 cursor-not-allowed bg-gray-50' 
-                            : 'text-gray-700 border-gray-300 hover:bg-orange-600 hover:border-orange-600 hover:text-white'
+                            : 'text-gray-700 border-gray-300 hover:bg-blue-600 hover:border-blue-600 hover:text-white'
                     }`}
                 >
                     {isOutOfStock ? "Out of stock" : "Buy now"}
