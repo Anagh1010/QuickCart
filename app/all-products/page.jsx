@@ -256,7 +256,7 @@ const AllProductsContent = () => {
                     ) : (
                         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-14 w-full">
                             {products.map((product, index) => (
-                                <ProductCard key={index} product={product} />
+                                <ProductCard key={index} product={product} loadEagerly={false} />
                             ))}
                         </div>
                     )}

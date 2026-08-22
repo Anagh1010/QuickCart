@@ -378,7 +378,7 @@ const Product = () => {
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-2 pb-14 w-full">
                         {products.slice(0, 5).map((product, index) => (
-                            <ProductCard key={index} product={product} />
+                            <ProductCard key={index} product={product} loadEagerly={false} />
                         ))}
                     </div>
                 </div>

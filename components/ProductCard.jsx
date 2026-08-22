@@ -1,9 +1,11 @@
+'use client'
+
 import React from 'react'
 import { assets } from '@/assets/assets'
 import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, loadEagerly }) => {
     const { currency, router } = useAppContext()
 
     // Retrieve dynamically calculated rating from database aggregation
@@ -38,6 +40,7 @@ const ProductCard = ({ product }) => {
                     className={`group-hover:scale-105 transition object-cover w-4/5 h-4/5 md:w-full md:h-full ${isOutOfStock ? 'opacity-40 grayscale' : ''}`}
                     width={800}
                     height={800}
+                    loading={loadEagerly ? 'eager' : 'lazy'}
                 />
                 
                 <button 
