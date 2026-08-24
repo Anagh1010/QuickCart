@@ -16,10 +16,7 @@ const ProductCard = ({ product, loadEagerly }) => {
 
     return (
         <div
-            onClick={() => { 
-                router.push('/product/' + product._id); 
-                scrollTo(0, 0); 
-            }}
+            onClick={() => router.push('/product/' + product._id)}
             className="flex flex-col items-start gap-0.5 max-w-[200px] w-full cursor-pointer relative"
         >
             <div className="cursor-pointer group relative bg-gray-500/10 rounded-lg w-full h-52 flex items-center justify-center overflow-hidden">
@@ -69,7 +66,7 @@ const ProductCard = ({ product, loadEagerly }) => {
                             key={index}
                             className="h-2.5 w-2.5"
                             src={
-                                index < Math.floor(avgRating || 4) // Default fallback to 4 stars visual if no rating
+                                index < Math.floor(avgRating)
                                     ? assets.star_icon
                                     : assets.star_dull_icon
                             }

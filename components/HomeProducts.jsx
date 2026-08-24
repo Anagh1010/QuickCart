@@ -1,29 +1,36 @@
 "use client";
 
+import Link from "next/link";
 import React from "react";
 import ProductCard from "./ProductCard";
-import { useAppContext } from "@/context/AppContext";
+import SectionHeading from "@/components/layout/SectionHeading";
+import LayoutContainer from "@/components/layout/LayoutContainer";
 
 const HomeProducts = ({ products }) => {
-
-  const { router } = useAppContext()
-
   return (
-    <div className="flex flex-col items-center pt-14">
-      <p className="text-2xl font-medium text-left w-full">Popular products</p>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-6 pb-14 w-full">
-        {products.map((product, index) => (
-          <ProductCard
-            key={product._id}
-            product={product}
-            loadEagerly={index < 5}
-          />
-        ))}
-      </div>
-      <button onClick={() => { router.push('/all-products') }} className="px-12 py-2.5 border rounded-sm text-gray-500/70 hover:bg-slate-50/90 transition">
-        See more
-      </button>
-    </div>
+    <section className="py-16">
+      <SectionHeading
+        action={
+          <Link className="rounded-full border border-gray-200 px-6 py-3 text-sm font-medium text-gray-700 transition hover:border-blue-500 hover:text-blue-600" href="/all-products">
+            View all products
+          </Link>
+        }
+        description="Fresh arrivals and customer favorites, updated continuously."
+        eyebrow="Popular right now"
+        title="Trending this week"
+      />
+      <LayoutContainer size="wide">
+        <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {products.map((product, index) => (
+            <ProductCard
+              key={product._id}
+              product={product}
+              loadEagerly={index < 5}
+            />
+          ))}
+        </div>
+      </LayoutContainer>
+    </section>
   );
 };
 

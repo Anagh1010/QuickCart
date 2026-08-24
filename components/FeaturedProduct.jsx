@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
 
@@ -25,33 +26,36 @@ const products = [
 
 const FeaturedProduct = () => {
   return (
-    <div className="mt-14">
-      <div className="flex flex-col items-center">
-        <p className="text-3xl font-medium">Featured Products</p>
-        <div className="w-28 h-0.5 bg-orange-600 mt-2"></div>
+    <section className="py-8">
+      <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8 xl:px-12">
+        <div className="mb-10 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">Featured collections</p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">Designed for how you live</h2>
+          <p className="mt-3 text-base leading-6 text-gray-500">Hand-picked experiences across sound, work, and everyday carry.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-14 mt-12 md:px-14 px-4">
+      <div className="mx-auto grid w-full max-w-[1440px] grid-cols-1 gap-5 px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-3 xl:px-12">
         {products.map(({ id, image, title, description }) => (
-          <div key={id} className="relative group">
+          <article key={id} className="group relative min-h-80 overflow-hidden rounded-[32px] bg-gray-900">
             <Image
+              fill
               src={image}
               alt={title}
-              className="group-hover:brightness-75 transition duration-300 w-full h-auto object-cover"
+              className="object-cover transition duration-500 group-hover:scale-105"
             />
-            <div className="group-hover:-translate-y-4 transition duration-300 absolute bottom-8 left-8 text-white space-y-2">
-              <p className="font-medium text-xl lg:text-2xl">{title}</p>
-              <p className="text-sm lg:text-base leading-5 max-w-60">
-                {description}
-              </p>
-              <button className="flex items-center gap-1.5 bg-orange-600 px-4 py-2 rounded-sm">
-                Buy now <Image className="h-3 w-3" src={assets.redirect_icon} alt="Redirect Icon" />
-              </button>
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/60 to-transparent p-7 pt-20 text-white">
+              <h3 className="text-xl font-semibold lg:text-2xl">{title}</h3>
+              <p className="mt-2 max-w-xs text-sm leading-6 text-white/75">{description}</p>
+              <Link className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-5 py-2.5 text-sm font-medium backdrop-blur transition hover:bg-white hover:text-gray-950" href="/all-products">
+                Shop collection
+                <Image alt="" className="size-3" height={12} src={assets.redirect_icon} width={12} />
+              </Link>
             </div>
-          </div>
+          </article>
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 

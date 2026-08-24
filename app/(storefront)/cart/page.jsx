@@ -3,7 +3,6 @@ import React from "react";
 import { assets } from "@/assets/assets";
 import OrderSummary from "@/components/OrderSummary";
 import Image from "next/image";
-import Navbar from "@/components/Navbar";
 import { useAppContext } from "@/context/AppContext";
 
 const Cart = () => {
@@ -11,9 +10,7 @@ const Cart = () => {
   const { products, router, cartItems, addToCart, updateCartQuantity, getCartCount } = useAppContext();
 
   return (
-    <>
-      <Navbar />
-      <div className="flex flex-col md:flex-row gap-10 px-6 md:px-16 lg:px-32 pt-14 mb-20">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-5 pb-20 pt-12 sm:px-8 md:flex-row xl:px-12">
         <div className="flex-1">
           <div className="flex items-center justify-between mb-8 border-b border-gray-500/30 pb-6">
             <p className="text-2xl md:text-3xl text-gray-500">
@@ -112,8 +109,7 @@ const Cart = () => {
           </button>
         </div>
         <OrderSummary />
-      </div>
-    </>
+    </div>
   );
 };
 

@@ -2,8 +2,6 @@
 import React, { useEffect, useState, useTransition } from "react";
 import { assets } from "@/assets/assets";
 import ProductCard from "@/components/ProductCard";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
@@ -119,9 +117,7 @@ const Product = () => {
     const isLowStock = productData.stock > 0 && productData.stock < 5;
 
     return (
-        <>
-            <Navbar />
-            <div className="px-6 md:px-16 lg:px-32 pt-10 pb-16 space-y-12 bg-gray-50/50 min-h-screen text-gray-800">
+        <div className="min-h-screen space-y-12 bg-gray-50/50 px-5 pb-16 pt-10 text-gray-800 sm:px-8 xl:px-12">
                 {/* 1. Main Info Layout */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-3xl border border-gray-200 shadow-xs">
                     {/* Left Frame: Images Showcase */}
@@ -382,9 +378,7 @@ const Product = () => {
                         ))}
                     </div>
                 </div>
-            </div>
-            <Footer />
-        </>
+        </div>
     );
 };
 

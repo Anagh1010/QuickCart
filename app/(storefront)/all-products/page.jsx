@@ -2,8 +2,6 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProductCard from "@/components/ProductCard";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Loading from "@/components/Loading";
 
 const CATEGORIES = ["Earphone", "Headphone", "Watch", "Mobile", "Camera", "Laptop", "Console"];
@@ -125,9 +123,7 @@ const AllProductsContent = () => {
     };
 
     return (
-        <>
-            <Navbar />
-            <div className="flex flex-col md:flex-row items-start gap-8 px-6 md:px-16 lg:px-32 py-10 min-h-screen bg-gray-50 text-gray-800">
+        <div className="flex min-h-screen flex-col items-start gap-8 bg-gray-50 px-5 py-10 text-gray-800 sm:px-8 md:flex-row xl:px-12">
                 {/* 🛠️ Filters Sidebar */}
                 <aside className="w-full md:w-64 shrink-0 bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
                     <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
@@ -256,14 +252,12 @@ const AllProductsContent = () => {
                     ) : (
                         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-14 w-full">
                             {products.map((product, index) => (
-                                <ProductCard key={index} product={product} loadEagerly={false} />
+                                <ProductCard key={product._id} product={product} loadEagerly={false} />
                             ))}
                         </div>
                     )}
                 </main>
-            </div>
-            <Footer />
-        </>
+        </div>
     );
 };
 

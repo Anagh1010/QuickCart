@@ -4,6 +4,7 @@ import { AppContextProvider } from "@/context/AppContext";
 import { Toaster } from "react-hot-toast";
 import { ClerkProvider } from "@clerk/nextjs";
 import Script from "next/script";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const outfit = Outfit({ subsets: ['latin'], weight: ["300", "400", "500"] })
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
           <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
           <Toaster />
           <AppContextProvider>
+            <ScrollToTop />
             {children}
           </AppContextProvider>
         </body>

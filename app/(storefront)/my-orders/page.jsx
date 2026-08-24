@@ -3,8 +3,6 @@ import React, { useEffect, useState } from "react";
 import { assets, orderDummyData } from "@/assets/assets";
 import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
-import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
 import Loading from "@/components/Loading";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -49,9 +47,7 @@ const MyOrders = () => {
     }, [user]);
 
     return (
-        <>
-            <Navbar />
-            <div className="flex flex-col justify-between px-6 md:px-16 lg:px-32 py-6 min-h-screen">
+        <div className="flex min-h-screen flex-col px-5 py-8 sm:px-8 xl:px-12">
                 <div className="space-y-5">
                     <h2 className="text-lg font-medium mt-6">My Orders</h2>
                     {loading ? (
@@ -101,9 +97,7 @@ const MyOrders = () => {
                         </div>
                     )}
                 </div>
-            </div>
-            <Footer />
-        </>
+        </div>
     );
 };
 

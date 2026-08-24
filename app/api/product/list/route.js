@@ -35,8 +35,10 @@ export async function GET(request) {
 
         if (minPrice || maxPrice) {
             matchCriteria.offerPrice = {}
-            if (minPrice) matchCriteria.offerPrice.$gte = Number(minPrice)
-            if (maxPrice) matchCriteria.offerPrice.$lte = Number(maxPrice)
+            const min = parseFloat(minPrice)
+            const max = parseFloat(maxPrice)
+            if (Number.isFinite(min) && min >= 0) matchCriteria.offerPrice.$gte = min
+            if (Number.isFinite(max) && max >= 0) matchCriteria.offerPrice.$lte = max
         }
 
         if (inStock === 'true') {
@@ -86,6 +88,6 @@ export async function GET(request) {
 
     } catch (error) {
         await logError('/api/product/list', error, '', {}, 'error', 'api', 500)
-        return NextResponse.json({ success: false, message: error.message })
+        return NextResponse.json({ success: false, message: 'Failed to fetch products' })
     }
 }
