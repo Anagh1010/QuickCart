@@ -10,10 +10,11 @@ import { getCloudinaryImageUrl } from "@/lib/cloudinaryImage";
 
 const Product = () => {
     const { id } = useParams();
-    const { products, router, addToCart, user, currency } = useAppContext();
+    const { router, addToCart, user, currency } = useAppContext();
 
     const [mainImage, setMainImage] = useState(null);
     const [productData, setProductData] = useState(null);
+    const [relatedProducts, setRelatedProducts] = useState([]);
     
     // Reviews & Stats states
     const [reviews, setReviews] = useState([]);
@@ -24,30 +25,13 @@ const Product = () => {
     const [isPending, startTransition] = useTransition();
 
     const fetchProductData = async () => {
-        try {
-            const res = await fetch(`/api/product/list?search=${encodeURIComponent(id)}`);
-            const product = products.find(p => p._id === id);
-            
-            if (res.ok && res.headers.get("content-type")?.includes("application/json")) {
-                const data = await res.json();
-            }
-
-            if (product) {
-                const stockRes = await fetch(`/api/product/list`);
-                if (stockRes.ok && stockRes.headers.get("content-type")?.includes("application/json")) {
-                    const stockData = await stockRes.json();
-                    if (stockData.success) {
-                        const freshProduct = stockData.products.find(p => p._id === id);
-                        setProductData(freshProduct || product);
-                        return;
-                    }
-                }
-                setProductData(product);
-            }
-        } catch (err) {
-            const product = products.find(p => p._id === id);
-            setProductData(product);
+        const res = await fetch(`/api/product/${id}`);
+        if (!res.ok) {
+            throw new Error(`Failed to load product: ${res.status}`);
         }
+
+        const data = await res.json();
+        setProductData(data.product);
     };
 
     const fetchReviews = async () => {
@@ -72,10 +56,27 @@ const Product = () => {
 
     useEffect(() => {
         if (id) {
-            fetchProductData();
+            fetchProductData().catch((error) => {
+                console.error("Failed to load product:", error);
+            });
             fetchReviews();
         }
-    }, [id, products.length]);
+    }, [id]);
+
+    useEffect(() => {
+        if (!productData) return;
+
+        fetch(`/api/product/list?category=${encodeURIComponent(productData.category)}`)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.success) {
+                    setRelatedProducts(data.products.filter((product) => product._id !== productData._id).slice(0, 5));
+                }
+            })
+            .catch((error) => {
+                console.error("Failed to load related products:", error);
+            });
+    }, [productData]);
 
     // React 19 Form Action Handler
     const handleReviewSubmit = async (formData) => {
@@ -376,8 +377,8 @@ const Product = () => {
                         <div className="w-20 h-0.5 bg-orange-600 mt-2"></div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-2 pb-14 w-full">
-                        {products.slice(0, 5).map((product, index) => (
-                            <ProductCard key={index} product={product} loadEagerly={false} />
+                        {relatedProducts.map((product) => (
+                            <ProductCard key={product._id} product={product} loadEagerly={false} />
                         ))}
                     </div>
                 </div>
