@@ -1,8 +1,8 @@
 # Continuity Ledger
 
 ## Snapshot
-- 2026-08-29 [USER] Goal: improve slow website loading time.
-- 2026-08-29 [CODE] Now: homepage product data is server-rendered, cached, and shared by the hero/cards; card image requests are responsive.
+- 2026-08-29 [USER] Goal: improve slow website loading time, including `/all-products`.
+- 2026-08-29 [CODE] Now: homepage and catalog duplicate-fetch/query bottlenecks are addressed.
 - 2026-08-29 [CODE] Next: deploy and compare production server timings/Core Web Vitals.
 - 2026-08-29 [USER] Open questions: none.
 
@@ -17,6 +17,7 @@
 - 2026-08-24 [CODE] D008 ACTIVE: `minPrice`/`maxPrice` validated with `Number.isFinite` + `>= 0` before Mongo query; raw `error.message` never exposed to client.
 - 2026-08-29 [CODE] D009 ACTIVE: cache home products for 60 seconds; connect to MongoDB only on a cache miss.
 - 2026-08-29 [CODE] D010 ACTIVE: skip the global full-catalog fetch on `/`; other routes retain it for cart/detail workflows.
+- 2026-08-29 [CODE] D011 ACTIVE: skip the global catalog fetch on `/all-products`, where the page owns filtered catalog data.
 
 ## Done (recent)
 - 2026-08-24 [CODE] Audit + fix pass: 15 items resolved (4 bugs, 4 security, 4 UX/layout, 3 dead-code).
@@ -27,6 +28,8 @@
 - 2026-08-24 [CODE] Deleted 4 orphan root-level components: Navbar, Footer, HeaderSlider, Banner (confirmed zero imports).
 - 2026-08-24 [CODE] Added reusable shell primitives and five modular homepage components; shared storefront layout.
 - 2026-08-29 [CODE] Homepage hero and Popular cards share server-fetched products; first five card images eager-load with responsive `sizes`.
+- 2026-08-29 [CODE] Catalog API review aggregation now returns grouped stats, defers audit writes, and advertises short shared response caching.
+- 2026-08-29 [CODE] Added product indexes for date and offer-price sorting.
 
 ## Working set
 - `app/(storefront)/layout.jsx`
@@ -42,6 +45,8 @@
 - `components/ProductCard.jsx`
 - `context/AppContext.jsx`
 - `lib/homeProducts.js`
+- `app/api/product/list/route.js`
+- `models/Product.js`
 
 ## Receipts
 - 2026-08-24 [TOOL] Verified all 15 fixes via grep: relative✓ fill✓ key✓ error-msg✓ itemInfo-guard✓ isFinite✓ star-fallback✓ ARIA✓ LayoutContainer✓ LF✓.
@@ -51,3 +56,4 @@
 - 2026-08-22 [TOOL] Server-side homepage retrieval limits to 10 products before calculating ratings.
 - 2026-08-29 [TOOL] `git diff --check` passes; Next build compiles revised app code but cannot fetch Outfit from Google Fonts in this environment.
 - 2026-08-29 [TOOL] ESLint is blocked by the repository's existing circular `@eslint/eslintrc` configuration error.
+- 2026-08-29 [TOOL] Next build reaches only the known Google Fonts network failure; no revised application compilation errors reported.

@@ -1,6 +1,5 @@
 import connectDB from '@/config/db'
 import Product from '@/models/Product'
-import Review from '@/models/Review'
 import { NextResponse } from 'next/server'
 import { getAuth } from '@clerk/nextjs/server'
 import { logError } from '@/lib/logger'
@@ -63,28 +62,39 @@ export async function GET(request) {
             {
                 $lookup: {
                     from: 'reviews',
-                    localField: '_id',
-                    foreignField: 'productId',
-                    as: 'reviewsList'
+                    let: { productId: '$_id' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$productId', '$$productId'] } } },
+                        { $group: { _id: null, avgRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } }
+                    ],
+                    as: 'reviewStats'
                 }
             },
             {
                 $addFields: {
-                    avgRating: { $ifNull: [{ $avg: '$reviewsList.rating' }, 0] },
-                    totalReviews: { $size: '$reviewsList' }
+                    avgRating: { $ifNull: [{ $arrayElemAt: ['$reviewStats.avgRating', 0] }, 0] },
+                    totalReviews: { $ifNull: [{ $arrayElemAt: ['$reviewStats.totalReviews', 0] }, 0] }
                 }
             },
+            { $project: { reviewStats: 0 } },
             { $sort: sortFields }
         ])
 
-        // Deduplicate within 5 minutes — AppContext re-fetches on every page
-        // navigation; we only want to log genuine browse sessions
-        const auditKey = userId || 'anonymous'
-        const alreadyLogged = await hasRecentAudit('product.listed', auditKey, 5)
-        if (!alreadyLogged) {
-            await logAudit('product.listed', 'product', userId || '', '', { count: products.length, search, category })
-        }
-        return NextResponse.json({ success: true, products })
+        // Audit logging is intentionally deferred so it cannot delay the catalog response.
+        void (async () => {
+            const auditKey = userId || 'anonymous'
+            const alreadyLogged = await hasRecentAudit('product.listed', auditKey, 5)
+            if (!alreadyLogged) {
+                await logAudit('product.listed', 'product', userId || '', '', { count: products.length, search, category })
+            }
+        })().catch((auditError) => {
+            console.error('[product/list] audit logging failed:', auditError)
+        })
+
+        return NextResponse.json(
+            { success: true, products },
+            { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } }
+        )
 
     } catch (error) {
         await logError('/api/product/list', error, '', {}, 'error', 'api', 500)

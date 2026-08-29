@@ -12,6 +12,9 @@ const productSchema = new mongoose.Schema({
     stock: { type: Number, required: true, default: 0 }
 })
 
+productSchema.index({ date: -1 })
+productSchema.index({ offerPrice: 1 })
+
 const Product = mongoose.models.product || mongoose.model('product',productSchema)
 
 export default Product
