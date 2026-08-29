@@ -43,8 +43,10 @@ async function connectDB() {
                 '',
                 3000   // cold-start connections are expected to take ~1s; warn above 3s
             )
-            .then(async m => {
-                await syncTtlIndex(m.connection.db)
+            .then(m => {
+                void syncTtlIndex(m.connection.db).catch(error => {
+                    console.error('[connectDB] TTL index sync failed:', error.message)
+                })
                 return m
             })
             .catch(err => {

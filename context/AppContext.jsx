@@ -165,7 +165,7 @@ export const AppContextProvider = (props) => {
     const loggerInitRef = useRef(false)
 
     useEffect(() => {
-        if (pathname !== '/' && pathname !== '/all-products') {
+        if (pathname && pathname !== '/' && pathname !== '/all-products') {
             fetchProductData()
         }
     }, [pathname])
