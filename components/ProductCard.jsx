@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { assets } from '@/assets/assets'
+import { getCloudinaryImageUrl } from '@/lib/cloudinaryImage';
 import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 
@@ -32,13 +33,14 @@ const ProductCard = ({ product, loadEagerly }) => {
                 ) : null}
 
                 <Image
-                    src={product.image[0]}
+                    src={getCloudinaryImageUrl(product.image[0], 400)}
                     alt={product.name}
                     className={`group-hover:scale-105 transition object-cover w-4/5 h-4/5 md:w-full md:h-full ${isOutOfStock ? 'opacity-40 grayscale' : ''}`}
                     width={800}
                     height={800}
                     loading={loadEagerly ? 'eager' : 'lazy'}
                     sizes="(max-width: 639px) 50vw, (max-width: 1279px) 33vw, 200px"
+                    unoptimized
                 />
                 
                 <button 

@@ -1,8 +1,8 @@
 # Continuity Ledger
 
 ## Snapshot
-- 2026-08-29 [USER] Goal: improve slow website loading time, including `/all-products`.
-- 2026-08-29 [CODE] Now: homepage and catalog duplicate-fetch/query bottlenecks are addressed; first-request DB maintenance no longer blocks responses.
+- 2026-08-29 [USER] Goal: improve slow website loading time, including first product-image loads.
+- 2026-08-29 [CODE] Now: homepage/catalog fetch bottlenecks and Cloudinary/Next image transformation overhead are addressed.
 - 2026-08-29 [CODE] Next: deploy and compare production server timings/Core Web Vitals.
 - 2026-08-29 [USER] Open questions: none.
 
@@ -19,6 +19,7 @@
 - 2026-08-29 [CODE] D010 ACTIVE: skip the global full-catalog fetch on `/`; other routes retain it for cart/detail workflows.
 - 2026-08-29 [CODE] D011 ACTIVE: skip the global catalog fetch on `/all-products`, where the page owns filtered catalog data.
 - 2026-08-29 [CODE] D012 ACTIVE: MongoDB TTL/index maintenance runs after connection establishment instead of delaying the first request.
+- 2026-08-29 [CODE] D013 ACTIVE: product images use direct Cloudinary `f_auto,q_auto` width variants with `next/image` optimization bypassed.
 
 ## Done (recent)
 - 2026-08-24 [CODE] Audit + fix pass: 15 items resolved (4 bugs, 4 security, 4 UX/layout, 3 dead-code).
@@ -32,6 +33,7 @@
 - 2026-08-29 [CODE] Catalog API review aggregation now returns grouped stats, defers audit writes, and advertises short shared response caching.
 - 2026-08-29 [CODE] Added product indexes for date and offer-price sorting.
 - 2026-08-29 [CODE] Guarded unresolved pathname so AppContext cannot start an unintended catalog fetch during initial hydration.
+- 2026-08-29 [CODE] Added Cloudinary image URL transformation helper; applied to product cards and product-detail gallery.
 
 ## Working set
 - `app/(storefront)/layout.jsx`
@@ -50,6 +52,7 @@
 - `app/api/product/list/route.js`
 - `models/Product.js`
 - `config/db.js`
+- `lib/cloudinaryImage.js`
 
 ## Receipts
 - 2026-08-24 [TOOL] Verified all 15 fixes via grep: relative✓ fill✓ key✓ error-msg✓ itemInfo-guard✓ isFinite✓ star-fallback✓ ARIA✓ LayoutContainer✓ LF✓.
@@ -61,3 +64,4 @@
 - 2026-08-29 [TOOL] ESLint is blocked by the repository's existing circular `@eslint/eslintrc` configuration error.
 - 2026-08-29 [TOOL] Next build reaches only the known Google Fonts network failure; no revised application compilation errors reported.
 - 2026-08-29 [TOOL] `git diff --check` passes after first-request changes; build remains blocked only by Google Fonts network access.
+- 2026-08-29 [TOOL] `git diff --check` passes after direct-image changes; build reaches only the existing Google Fonts network failure.

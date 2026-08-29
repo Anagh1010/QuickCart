@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
 import { useAppContext } from "@/context/AppContext";
+import { getCloudinaryImageUrl } from "@/lib/cloudinaryImage";
 
 const Product = () => {
     const { id } = useParams();
@@ -124,12 +125,13 @@ const Product = () => {
                     <div className="flex flex-col gap-4">
                         <div className="rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center p-6 border border-gray-200/50 relative">
                             <Image
-                                src={mainImage || productData.image[0]}
+                                src={getCloudinaryImageUrl(mainImage || productData.image[0], 1000)}
                                 alt={productData.name}
                                 className="w-full max-h-96 object-contain"
                                 width={1280}
                                 height={720}
                                 priority
+                                unoptimized
                             />
                         </div>
 
@@ -141,11 +143,12 @@ const Product = () => {
                                     className={`cursor-pointer rounded-xl overflow-hidden bg-gray-100 p-2 border transition ${mainImage === image ? 'border-orange-500 bg-white ring-2 ring-orange-100' : 'border-gray-200 hover:border-gray-300'}`}
                                 >
                                     <Image
-                                        src={image}
+                                        src={getCloudinaryImageUrl(image, 200)}
                                         alt="thumbnail"
                                         className="w-full h-auto object-contain max-h-16"
                                         width={1280}
                                         height={720}
+                                        unoptimized
                                     />
                                 </div>
                             ))}
