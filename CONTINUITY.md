@@ -1,10 +1,10 @@
 # Continuity Ledger
 
 ## Snapshot
-- 2026-08-24 [USER] Goal: redesign layout (complete) → audit & fix all issues found by o1-alpha rewrite.
-- 2026-08-24 [CODE] Now: navbar restored to standard page flow (scrolls up naturally with page); storefront layout main pt removed.
-- 2026-08-24 [CODE] Next: none outstanding; ready for manual QA / staging deploy.
-- 2026-08-24 [USER] Open questions: none.
+- 2026-08-29 [USER] Goal: improve slow website loading time.
+- 2026-08-29 [CODE] Now: homepage product data is server-rendered, cached, and shared by the hero/cards; card image requests are responsive.
+- 2026-08-29 [CODE] Next: deploy and compare production server timings/Core Web Vitals.
+- 2026-08-29 [USER] Open questions: none.
 
 ## Decisions
 - 2026-08-22 [CODE] D001 ACTIVE: retain the historical `Outfit` weights (`300`, `400`, `500`) from the pre-JetBrains-Mono revision.
@@ -15,6 +15,8 @@
 - 2026-08-24 [CODE] D006 ACTIVE: logo and Home navigation explicitly clear an existing URL hash before returning to `/` so Next.js does not preserve `#about`.
 - 2026-08-24 [CODE] D007 ACTIVE: landing-page category tiles link directly to encoded `/all-products` filters using only catalog-supported categories.
 - 2026-08-24 [CODE] D008 ACTIVE: `minPrice`/`maxPrice` validated with `Number.isFinite` + `>= 0` before Mongo query; raw `error.message` never exposed to client.
+- 2026-08-29 [CODE] D009 ACTIVE: cache home products for 60 seconds; connect to MongoDB only on a cache miss.
+- 2026-08-29 [CODE] D010 ACTIVE: skip the global full-catalog fetch on `/`; other routes retain it for cart/detail workflows.
 
 ## Done (recent)
 - 2026-08-24 [CODE] Audit + fix pass: 15 items resolved (4 bugs, 4 security, 4 UX/layout, 3 dead-code).
@@ -24,6 +26,7 @@
 - 2026-08-24 [CODE] Fixed: MobileMenu ARIA dialog attrs added; ValueHighlights Tailwind class order; HeroSlider slide-2 priority removed.
 - 2026-08-24 [CODE] Deleted 4 orphan root-level components: Navbar, Footer, HeaderSlider, Banner (confirmed zero imports).
 - 2026-08-24 [CODE] Added reusable shell primitives and five modular homepage components; shared storefront layout.
+- 2026-08-29 [CODE] Homepage hero and Popular cards share server-fetched products; first five card images eager-load with responsive `sizes`.
 
 ## Working set
 - `app/(storefront)/layout.jsx`
@@ -38,6 +41,7 @@
 - `components/NewsLetter.jsx`
 - `components/ProductCard.jsx`
 - `context/AppContext.jsx`
+- `lib/homeProducts.js`
 
 ## Receipts
 - 2026-08-24 [TOOL] Verified all 15 fixes via grep: relative✓ fill✓ key✓ error-msg✓ itemInfo-guard✓ isFinite✓ star-fallback✓ ARIA✓ LayoutContainer✓ LF✓.
@@ -45,3 +49,5 @@
 - 2026-08-24 [TOOL] Fixed CategoryRail empty-image regression; dark-footer heading contrast; `/#about` persistence; hydration mismatch on NewsLetter.
 - 2026-08-24 [TOOL] Build/lint not runnable here: dependencies absent and npm registry access returned DNS `ENOTFOUND`.
 - 2026-08-22 [TOOL] Server-side homepage retrieval limits to 10 products before calculating ratings.
+- 2026-08-29 [TOOL] `git diff --check` passes; Next build compiles revised app code but cannot fetch Outfit from Google Fonts in this environment.
+- 2026-08-29 [TOOL] ESLint is blocked by the repository's existing circular `@eslint/eslintrc` configuration error.

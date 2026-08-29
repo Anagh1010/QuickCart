@@ -3,11 +3,11 @@
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { assets } from "@/assets/assets";
-import { useAppContext } from "@/context/AppContext";
+import { useRouter } from "next/navigation";
 import LayoutContainer from "@/components/layout/LayoutContainer";
 
-const HomeHeroSlider = () => {
-  const { products, router } = useAppContext();
+const HomeHeroSlider = ({ products }) => {
+  const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides = useMemo(() => {

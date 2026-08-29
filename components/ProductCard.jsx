@@ -38,6 +38,7 @@ const ProductCard = ({ product, loadEagerly }) => {
                     width={800}
                     height={800}
                     loading={loadEagerly ? 'eager' : 'lazy'}
+                    sizes="(max-width: 639px) 50vw, (max-width: 1279px) 33vw, 200px"
                 />
                 
                 <button 

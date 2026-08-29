@@ -1,7 +1,7 @@
 'use client'
 import { useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { initClientLogger } from "@/lib/clientLogger";
@@ -16,6 +16,7 @@ export const AppContextProvider = (props) => {
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY
     const router = useRouter()
+    const pathname = usePathname()
 
     const { user } = useUser()
     const { getToken } = useAuth()
@@ -164,8 +165,10 @@ export const AppContextProvider = (props) => {
     const loggerInitRef = useRef(false)
 
     useEffect(() => {
-        fetchProductData()
-    }, [])
+        if (pathname !== '/') {
+            fetchProductData()
+        }
+    }, [pathname])
 
     useEffect(() => {
         if (user) {
