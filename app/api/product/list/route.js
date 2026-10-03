@@ -1,103 +1,34 @@
-import connectDB from '@/config/db'
-import Product from '@/models/Product'
-import { NextResponse } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
-import { logError } from '@/lib/logger'
-import { logAudit, hasRecentAudit } from '@/lib/audit'
+import { NextResponse } from "next/server";
+import { getAuth } from "@clerk/nextjs/server";
+import { logError } from "@/lib/logger";
+import { hasRecentAudit, logAudit } from "@/lib/audit";
+import { getCatalogProducts } from "@/lib/catalogProducts";
 
 export async function GET(request) {
-    try {
-        // Extract userId if the user is logged in — product list is public but
-        // we capture the actor when an auth token is present
-        const { userId } = getAuth(request)
-        await connectDB()
+  try {
+    const { userId } = getAuth(request);
+    const { searchParams } = new URL(request.url);
+    const filters = Object.fromEntries(searchParams);
+    const products = await getCatalogProducts(filters);
 
-        const { searchParams } = new URL(request.url)
-        const search = searchParams.get('search')
-        const category = searchParams.get('category')
-        const minPrice = searchParams.get('minPrice')
-        const maxPrice = searchParams.get('maxPrice')
-        const inStock = searchParams.get('inStock')
-        const sort = searchParams.get('sort')
+    // Logging must never hold the public catalog response open.
+    void (async () => {
+      const auditKey = userId || "anonymous";
+      if (!await hasRecentAudit("product.listed", auditKey, 5)) {
+        await logAudit("product.listed", "product", userId || "", "", {
+          count: products.length,
+          search: filters.search || null,
+          category: filters.category || null,
+        });
+      }
+    })().catch((error) => console.error("[product/list] audit logging failed:", error));
 
-        // Build dynamic query match criteria
-        const matchCriteria = {}
-
-        if (search) {
-            const escapedSearch = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-            matchCriteria.name = { $regex: escapedSearch, $options: 'i' }
-        }
-
-        if (category) {
-            matchCriteria.category = { $in: category.split(',') }
-        }
-
-        if (minPrice || maxPrice) {
-            matchCriteria.offerPrice = {}
-            const min = parseFloat(minPrice)
-            const max = parseFloat(maxPrice)
-            if (Number.isFinite(min) && min >= 0) matchCriteria.offerPrice.$gte = min
-            if (Number.isFinite(max) && max >= 0) matchCriteria.offerPrice.$lte = max
-        }
-
-        if (inStock === 'true') {
-            matchCriteria.stock = { $gt: 0 }
-        }
-
-        // Build sort criteria
-        let sortFields = { date: -1 }
-        if (sort === 'price-asc') {
-            sortFields = { offerPrice: 1 }
-        } else if (sort === 'price-desc') {
-            sortFields = { offerPrice: -1 }
-        } else if (sort === 'newest') {
-            sortFields = { date: -1 }
-        } else if (sort === 'rating') {
-            sortFields = { avgRating: -1, date: -1 }
-        }
-
-        // Run aggregation pipeline to dynamically compute reviews analytics
-        const products = await Product.aggregate([
-            { $match: matchCriteria },
-            {
-                $lookup: {
-                    from: 'reviews',
-                    let: { productId: '$_id' },
-                    pipeline: [
-                        { $match: { $expr: { $eq: ['$productId', '$$productId'] } } },
-                        { $group: { _id: null, avgRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } }
-                    ],
-                    as: 'reviewStats'
-                }
-            },
-            {
-                $addFields: {
-                    avgRating: { $ifNull: [{ $arrayElemAt: ['$reviewStats.avgRating', 0] }, 0] },
-                    totalReviews: { $ifNull: [{ $arrayElemAt: ['$reviewStats.totalReviews', 0] }, 0] }
-                }
-            },
-            { $project: { reviewStats: 0 } },
-            { $sort: sortFields }
-        ])
-
-        // Audit logging is intentionally deferred so it cannot delay the catalog response.
-        void (async () => {
-            const auditKey = userId || 'anonymous'
-            const alreadyLogged = await hasRecentAudit('product.listed', auditKey, 5)
-            if (!alreadyLogged) {
-                await logAudit('product.listed', 'product', userId || '', '', { count: products.length, search, category })
-            }
-        })().catch((auditError) => {
-            console.error('[product/list] audit logging failed:', auditError)
-        })
-
-        return NextResponse.json(
-            { success: true, products },
-            { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } }
-        )
-
-    } catch (error) {
-        await logError('/api/product/list', error, '', {}, 'error', 'api', 500)
-        return NextResponse.json({ success: false, message: 'Failed to fetch products' })
-    }
+    return NextResponse.json(
+      { success: true, products },
+      { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } },
+    );
+  } catch (error) {
+    await logError("/api/product/list", error, "", {}, "error", "api", 500);
+    return NextResponse.json({ success: false, message: "Failed to fetch products" }, { status: 500 });
+  }
 }

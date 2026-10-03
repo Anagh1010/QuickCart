@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { assets } from "@/assets/assets";
 import { useRouter } from "next/navigation";
 import LayoutContainer from "@/components/layout/LayoutContainer";
+import { getCloudinaryImageUrl } from "@/lib/cloudinaryImage";
 
 const HomeHeroSlider = ({ products }) => {
   const router = useRouter();
@@ -71,7 +72,7 @@ const HomeHeroSlider = ({ products }) => {
                 </div>
                 <div className="flex justify-center">
                   <div className="flex size-56 items-center justify-center rounded-[36px] bg-white/10 backdrop-blur-sm sm:size-72 lg:size-80">
-                    <Image alt={slide.title} className="max-h-44 max-w-44 object-contain sm:max-h-64 sm:max-w-64 lg:max-h-72 lg:max-w-72" height={400} priority={index === 0} src={slide.product?.image?.[0] || slide.fallbackImage} width={400} />
+                    <Image alt={slide.title} className="max-h-44 max-w-44 object-contain sm:max-h-64 sm:max-w-64 lg:max-h-72 lg:max-w-72" height={400} loading={index === 0 ? undefined : "lazy"} priority={index === 0} src={getCloudinaryImageUrl(slide.product?.image?.[0] || slide.fallbackImage, 800)} unoptimized={Boolean(slide.product?.image?.[0])} width={400} />
                   </div>
                 </div>
               </div>

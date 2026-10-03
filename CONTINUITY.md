@@ -1,10 +1,11 @@
 # Continuity Ledger
 
 ## Snapshot
-- 2026-08-29 [USER] Goal: improve slow website loading time, including first product-image loads and product-detail navigation.
-- 2026-08-29 [CODE] Now: product detail uses a direct lookup instead of multiple full-catalog requests; related cards load after the product.
-- 2026-08-29 [CODE] Next: deploy and compare production server timings/Core Web Vitals.
-- 2026-08-29 [USER] Open questions: none.
+- 2026-10-03 [USER] Goal: identify and fix website load times above one second.
+- 2026-10-03 [CODE] Now: catalog and product-detail primary content are server-rendered from short-lived Mongo-backed caches; reviews/related products remain non-blocking.
+- 2026-10-03 [CODE] Next: deploy and compare production TTFB/LCP against the prior version.
+- 2026-10-03 [TOOL] UNCONFIRMED: a local production build cannot run because `node_modules` is absent (`next: command not found`).
+- 2026-10-03 [USER] Open questions: exact production TTFB/LCP is unknown until deployed.
 
 ## Decisions
 - 2026-08-22 [CODE] D001 ACTIVE: retain the historical `Outfit` weights (`300`, `400`, `500`) from the pre-JetBrains-Mono revision.
@@ -21,6 +22,8 @@
 - 2026-08-29 [CODE] D012 ACTIVE: MongoDB TTL/index maintenance runs after connection establishment instead of delaying the first request.
 - 2026-08-29 [CODE] D013 ACTIVE: product images use direct Cloudinary `f_auto,q_auto` width variants with `next/image` optimization bypassed.
 - 2026-08-29 [CODE] D014 ACTIVE: product detail fetches `/api/product/[id]`; related products are non-blocking.
+- 2026-10-03 [CODE] D015 ACTIVE: catalog filtering is performed during the server render and cached for 30 seconds; the browser no longer begins the route with a client-side catalog API waterfall.
+- 2026-10-03 [CODE] D016 ACTIVE: product details are cached for 60 seconds and rendered on the server; Cloudinary hero images use direct `f_auto,q_auto,w_800` CDN variants.
 
 ## Done (recent)
 - 2026-08-24 [CODE] Audit + fix pass: 15 items resolved (4 bugs, 4 security, 4 UX/layout, 3 dead-code).
@@ -36,11 +39,14 @@
 - 2026-08-29 [CODE] Guarded unresolved pathname so AppContext cannot start an unintended catalog fetch during initial hydration.
 - 2026-08-29 [CODE] Added Cloudinary image URL transformation helper; applied to product cards and product-detail gallery.
 - 2026-08-29 [CODE] Replaced product detail's unused ID search plus full-catalog reload with one direct product request.
+- 2026-10-03 [CODE] Moved the interactive catalog UI to `AllProductsClient.jsx`, leaving its data retrieval in the server route component.
+- 2026-10-03 [CODE] Moved the product-detail UI to `ProductPageClient.jsx`, leaving initial product retrieval in the server route component.
 
 ## Working set
 - `app/(storefront)/layout.jsx`
 - `app/(storefront)/page.jsx`
 - `app/(storefront)/all-products/page.jsx`
+- `app/(storefront)/all-products/AllProductsClient.jsx`
 - `components/layout/Navbar.jsx`
 - `components/layout/Footer.jsx`
 - `components/layout/MobileMenu.jsx`
@@ -51,12 +57,15 @@
 - `components/ProductCard.jsx`
 - `context/AppContext.jsx`
 - `lib/homeProducts.js`
+- `lib/catalogProducts.js`
+- `lib/productDetails.js`
 - `app/api/product/list/route.js`
 - `models/Product.js`
 - `config/db.js`
 - `lib/cloudinaryImage.js`
 - `app/api/product/[id]/route.js`
 - `app/(storefront)/product/[id]/page.jsx`
+- `app/(storefront)/product/[id]/ProductPageClient.jsx`
 
 ## Receipts
 - 2026-08-24 [TOOL] Verified all 15 fixes via grep: relative✓ fill✓ key✓ error-msg✓ itemInfo-guard✓ isFinite✓ star-fallback✓ ARIA✓ LayoutContainer✓ LF✓.
@@ -70,3 +79,6 @@
 - 2026-08-29 [TOOL] `git diff --check` passes after first-request changes; build remains blocked only by Google Fonts network access.
 - 2026-08-29 [TOOL] `git diff --check` passes after direct-image changes; build reaches only the existing Google Fonts network failure.
 - 2026-08-29 [TOOL] `git diff --check` passes after direct-product changes; build reaches only the existing Google Fonts network failure.
+- 2026-08-29 [CODE] First visits still require client hydration, API/database work, and direct Cloudinary downloads; product detail also separately loads reviews and then related products.
+- 2026-10-03 [TOOL] `git diff --check` passes after the load-path changes.
+- 2026-10-03 [TOOL] `npm run build` is blocked before compilation: the workspace has no installed dependencies (`next: command not found`).
